@@ -55,7 +55,6 @@ function clevers_product_carousel_get_webp_image_url( int $attachment_id, string
 		return '';
 	}
 
-	$original_url = $image_data[0];
 	$original_path = get_attached_file( $attachment_id );
 
 	if ( ! $original_path || ! file_exists( $original_path ) ) {
@@ -63,6 +62,9 @@ function clevers_product_carousel_get_webp_image_url( int $attachment_id, string
 	}
 
 	$info = pathinfo( $original_path );
+	if ( ! isset( $info['dirname'] ) || '' === $info['dirname'] ) {
+		return '';
+	}
 	$webp_path = $info['dirname'] . '/' . $info['filename'] . '.webp';
 
 	if ( file_exists( $webp_path ) ) {

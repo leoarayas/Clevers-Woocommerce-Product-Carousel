@@ -51,10 +51,8 @@ class Clevers_Product_Carousel_Render {
 		wp_enqueue_script( 'clv-carousel' );
 	}
 
-	/** @param array<string, mixed>|string $atts */
-	public function shortcode( $atts ): string {
-		$atts = is_array( $atts ) ? $atts : array();
-
+	/** @param array<string, mixed> $atts */
+	public function shortcode( array $atts ): string {
 		$atts = shortcode_atts(
 			array(
 				'id' => 0,
