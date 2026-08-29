@@ -43,15 +43,18 @@ final class RenderIntegrationTest extends TestCase {
 	public function test_render_uses_cached_html_when_available(): void {
 		$post             = new WP_Post();
 		$post->post_type  = CLV_SLUG;
-		$GLOBALS['mock_state']['posts'][20]              = $post;
-		$GLOBALS['mock_state']['post_meta'][20]          = array();
-		$GLOBALS['mock_state']['transients']['clv_carousel_20_v0_g0_test'] = '<div>cached</div>';
+		$GLOBALS['mock_state']['posts'][20]     = $post;
+		$GLOBALS['mock_state']['post_meta'][20] = array();
+		$args = clevers_product_carousel_build_query_args( 20 );
+		$settings = clevers_product_carousel_get_settings( 20 );
+		$cache_key = 'clv_carousel_20_v0_g0_' . md5( wp_json_encode( $args ) . '|' . wp_json_encode( $settings ) );
+		$GLOBALS['mock_state']['transients'][ $cache_key ] = '<div>cached</div>';
 
 		$renderer = new Clevers_Product_Carousel_Render();
 		$html     = $renderer->render_carousel( 20 );
 
-		// Should return cached content (though cache key depends on args/settings hash).
-		$this->assertIsString( $html );
+		$this->assertStringEndsWith( '<div>cached</div>', $html );
+		$this->assertSame( 0, WC_Product_Query::$construct_count );
 	}
 
 	public function test_settings_defaults_applied_correctly(): void {

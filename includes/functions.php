@@ -34,8 +34,7 @@ function clevers_product_carousel_supports_webp(): bool {
 		return false;
 	}
 
-	$supports = wp_image_editor_supports( array( 'mime_type' => 'image/webp' ) );
-	return is_array( $supports ) && ! empty( $supports['mime_type'] );
+	return (bool) wp_image_editor_supports( array( 'mime_type' => 'image/webp' ) );
 }
 
 /**
