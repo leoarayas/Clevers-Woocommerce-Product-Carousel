@@ -54,22 +54,24 @@ function clevers_product_carousel_get_webp_image_url( int $attachment_id, string
 		return '';
 	}
 
-	$original_path = get_attached_file( $attachment_id );
-
-	if ( ! $original_path || ! file_exists( $original_path ) ) {
+	$upload_dir = wp_upload_dir();
+	$image_url  = $image_data[0];
+	if ( 0 !== strpos( $image_url, $upload_dir['baseurl'] ) ) {
+		return '';
+	}
+	$image_path = str_replace( $upload_dir['baseurl'], $upload_dir['basedir'], $image_url );
+	if ( ! file_exists( $image_path ) ) {
 		return '';
 	}
 
-	$info = pathinfo( $original_path );
+	$info = pathinfo( $image_path );
 	if ( ! isset( $info['dirname'] ) || '' === $info['dirname'] ) {
 		return '';
 	}
 	$webp_path = $info['dirname'] . '/' . $info['filename'] . '.webp';
 
 	if ( file_exists( $webp_path ) ) {
-		$upload_dir = wp_upload_dir();
-		$webp_url = str_replace( $upload_dir['basedir'], $upload_dir['basedir'], $webp_path );
-		return str_replace( $upload_dir['basedir'], $upload_dir['baseurl'], $webp_url );
+		return str_replace( $upload_dir['basedir'], $upload_dir['baseurl'], $webp_path );
 	}
 
 	return '';

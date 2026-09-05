@@ -53,7 +53,7 @@ final class RenderIntegrationTest extends TestCase {
 		$renderer = new Clevers_Product_Carousel_Render();
 		$html     = $renderer->render_carousel( 20 );
 
-		$this->assertStringEndsWith( '<div>cached</div>', $html );
+		$this->assertSame( '<div>cached</div>', $html );
 		$this->assertSame( 0, WC_Product_Query::$construct_count );
 	}
 
