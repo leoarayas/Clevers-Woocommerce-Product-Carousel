@@ -4,7 +4,7 @@ Donate link: https://clevers.dev
 Tags: woocommerce, carousel, products, ecommerce
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.2.3
+Stable tag: 1.3.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -115,6 +115,25 @@ add_action( 'clevers_carousel_before_render', function( $carousel_id, $settings,
 
 Namespace variants such as `clevers_carousel/query_args`, `clevers_carousel/before`, and `clevers_carousel/after` are also available.
 
+= WP-CLI commands =
+
+When WP-CLI is available, the plugin registers a `clevers-carousel` command namespace:
+
+* `wp clevers-carousel list [--preset=<n>]` — print every carousel (id, title, status, preset, shortcode) as a table. Filter by preset with `--preset`.
+* `wp clevers-carousel flush-cache` — delete all `clv_carousel_*` cache transients and bump the global cache version so in-process renders rebuild. Use after imports or when prices/stock have changed but the cache has not expired yet.
+* `wp clevers-carousel render <id> [--file=<path>]` — print the rendered HTML for a given carousel id to stdout, or write it to a file. Handy for headless smoke tests and template debugging.
+
+Examples:
+
+```
+wp clevers-carousel list
+wp clevers-carousel list --preset=2
+wp clevers-carousel flush-cache
+wp clevers-carousel render 42 --file=/tmp/carousel-42.html
+```
+
+These commands are loaded only when `WP_CLI` is defined, so there is no overhead in normal HTTP requests.
+
 == Third-party Libraries ==
 
 This plugin bundles **Slick.js v1.8.1** by Ken Wheeler, licensed under the MIT License.
@@ -128,12 +147,17 @@ Source: https://github.com/kenwheeler/slick
 
 == Changelog ==
 
+= 1.3.0 =
+* Added WP-CLI commands: `wp clevers-carousel list`, `wp clevers-carousel flush-cache`, `wp clevers-carousel render <id>`. Useful for staging environments, CI pipelines, and headless smoke tests.
+* Documented developer hooks (filters/actions) more clearly in the FAQ.
+* No new runtime dependencies; WP-CLI integration adds zero overhead when WP-CLI is not in use.
+
 = 1.2.3 =
 * Enhanced Brizy editor integration.
 * Refined JSON import flow.
 * Improved frontend fallback behavior.
 * Added Gutenberg block support improvements.
-* Added REST API endpoints for carousel operations.
+* Added queue-metrics observability fields (pending/processed/failed, avg time, last error) for the rendering pipeline.
 * Enhanced admin tools and management UX.
 
 = 1.2.1 =

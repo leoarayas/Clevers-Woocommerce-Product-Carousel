@@ -5,7 +5,7 @@
  * Description: Create customizable WooCommerce product carousels with server-side rendering and theme-overridable templates.
  * Author:      Clevers Devs
  * Author URI:  https://clevers.dev
- * Version: 1.2.3
+ * Version: 1.3.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Tested up to:      6.9
@@ -43,6 +43,7 @@ require_once CLV_DIR . 'includes/class-cpt.php';
 require_once CLV_DIR . 'includes/class-admin.php';
 require_once CLV_DIR . 'includes/class-render.php';
 require_once CLV_DIR . 'includes/class-health-check.php';
+require_once CLV_DIR . 'includes/class-cli.php';
 
 // Translations for the `clevers-product-carousel` text domain are loaded
 // automatically by WordPress on `init` since WP 4.6, so no explicit
