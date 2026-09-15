@@ -670,6 +670,7 @@ class Clevers_Product_Carousel_Admin {
 
 		$import_requested = isset( $_POST['clv_apply_import_json'] );
 		if ( $import_requested ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON payload: decoded + structurally validated in extract_import_settings_from_raw() / normalize_imported_settings(). wp_unslash() strips slashes added by WP magic quotes.
 			$raw      = isset( $_POST['clv_import_json'] ) ? wp_unslash( $_POST['clv_import_json'] ) : '';
 			$settings = $this->extract_import_settings_from_raw( $raw );
 
@@ -942,6 +943,7 @@ class Clevers_Product_Carousel_Admin {
 			wp_die( esc_html__( 'Carousel not found.', 'clevers-product-carousel' ) );
 		}
 
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON payload: decoded + structurally validated in extract_import_settings_from_raw() / normalize_imported_settings(). wp_unslash() strips slashes added by WP magic quotes.
 		$raw = isset( $_POST['clv_import_json'] ) ? wp_unslash( $_POST['clv_import_json'] ) : '';
 		$raw = trim( (string) $raw );
 		if ( '' === $raw ) {
@@ -971,6 +973,7 @@ class Clevers_Product_Carousel_Admin {
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin notice from redirect query arg; value is whitelisted against $map before rendering, never persisted or echoed raw. Nonce was verified at the originating handler.
 		$notice = isset( $_GET['clv_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['clv_notice'] ) ) : '';
 		if ( '' === $notice ) {
 			return;

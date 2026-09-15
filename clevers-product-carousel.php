@@ -6,7 +6,7 @@
  * Author:      Clevers Devs
  * Author URI:  https://clevers.dev
  * Version: 1.2.3
- * Requires at least: 5.8
+ * Requires at least: 6.0
  * Requires PHP:      7.4
  * Tested up to:      6.9
  * License:     GPLv2 or later
@@ -44,11 +44,9 @@ require_once CLV_DIR . 'includes/class-admin.php';
 require_once CLV_DIR . 'includes/class-render.php';
 require_once CLV_DIR . 'includes/class-health-check.php';
 
-function clevers_product_carousel_load_textdomain(): void {
-	load_plugin_textdomain( 'clevers-product-carousel', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
-}
-
-add_action( 'plugins_loaded', 'clevers_product_carousel_load_textdomain' );
+// Translations for the `clevers-product-carousel` text domain are loaded
+// automatically by WordPress on `init` since WP 4.6, so no explicit
+// load_plugin_textdomain() call is needed.
 
 function clevers_product_carousel_init(): void {
 	$cpt = new Clevers_Product_Carousel_CPT();

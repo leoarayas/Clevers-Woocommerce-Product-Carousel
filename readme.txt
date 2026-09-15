@@ -1,8 +1,8 @@
 === Clevers Product Carousel ===
 Contributors: cleversdevs
 Donate link: https://clevers.dev
-Tags: woocommerce, carousel, products, ecommerce,
-Requires at least: 5.8
+Tags: woocommerce, carousel, products, ecommerce
+Requires at least: 6.0
 Tested up to: 6.9
 Stable tag: 1.2.3
 Requires PHP: 7.4
@@ -114,6 +114,11 @@ add_action( 'clevers_carousel_before_render', function( $carousel_id, $settings,
 ```
 
 Namespace variants such as `clevers_carousel/query_args`, `clevers_carousel/before`, and `clevers_carousel/after` are also available.
+
+== Third-party Libraries ==
+
+This plugin bundles **Slick.js v1.8.1** by Ken Wheeler, licensed under the MIT License.
+Source: https://github.com/kenwheeler/slick
 
 == Screenshots ==
 1. Admin panel with carousel configuration fields.

@@ -403,6 +403,7 @@ function clevers_product_carousel_get_slider_data_attributes( $carousel_id, arra
  * @return bool
  */
 function clevers_product_carousel_is_brizy_editor_preview_request(): bool {
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Read-only boolean probe (stripos) on request context, never persisted or echoed. wp_unslash() strips magic-quote slashes before substring matching.
 	$action = isset( $_REQUEST['action'] ) ? (string) wp_unslash( $_REQUEST['action'] ) : '';
 	if ( false !== stripos( $action, 'in-front-editor' ) ) {
 		return true;
@@ -418,6 +419,7 @@ function clevers_product_carousel_is_brizy_editor_preview_request(): bool {
 			return true;
 		}
 	}
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 	$referer = wp_get_referer();
 	if ( is_string( $referer ) && false !== stripos( $referer, 'in-front-editor' ) ) {
