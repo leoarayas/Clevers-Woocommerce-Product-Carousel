@@ -62,7 +62,7 @@ class CLEVPRCA_CLI {
 		$rows = array();
 		foreach ( $query->posts as $carousel ) {
 			$meta  = clevprca_get_carousel_meta( $carousel->ID );
-			$preset = isset( $meta['preset'] ) ? (int) $meta['preset'] : 1;
+			$preset = isset( $meta['preset'] ) && is_numeric( $meta['preset'] ) ? (int) $meta['preset'] : 1;
 
 			if ( $preset_filter > 0 && $preset !== $preset_filter ) {
 				continue;

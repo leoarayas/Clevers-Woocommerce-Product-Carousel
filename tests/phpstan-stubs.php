@@ -9,7 +9,7 @@ namespace {
  */
 
 class WP_Query {
-	/** @var array<int,object> */
+	/** @var array<int,WP_Post> */
 	public $posts = array();
 
 	/** @param array<string,mixed> $args */
@@ -18,6 +18,17 @@ class WP_Query {
 	public function have_posts(): bool {
 		return false;
 	}
+}
+
+class WP_Post {
+	/** @var int */
+	public $ID = 0;
+
+	/** @var string */
+	public $post_title = '';
+
+	/** @var string */
+	public $post_status = '';
 }
 
 class WP_CLI {
