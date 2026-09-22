@@ -8,55 +8,55 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Card 4 / Preset 4
  *
- * @var WC_Product $clevers_product_carousel_product
+ * @var WC_Product $clevprca_product
  * @var array $settings
  */
 
-if (!$clevers_product_carousel_product instanceof WC_Product) {
+if (!$clevprca_product instanceof WC_Product) {
     return;
 }
 
-$clevers_product_carousel_price_html = $clevers_product_carousel_product->get_price_html();
-$clevers_product_carousel_permalink  = $clevers_product_carousel_product->get_permalink();
-$clevers_product_carousel_title      = $clevers_product_carousel_product->get_name();
-$clevers_product_carousel_img        = $clevers_product_carousel_product->get_image( 'woocommerce_thumbnail' );
+$clevprca_price_html = $clevprca_product->get_price_html();
+$clevprca_permalink  = $clevprca_product->get_permalink();
+$clevprca_title      = $clevprca_product->get_name();
+$clevprca_img        = $clevprca_product->get_image( 'woocommerce_thumbnail' );
 
 // Helper con prefijo del plugin.
-$clevers_product_carousel_discount = clevers_product_carousel_get_discount_percentage(
-        $clevers_product_carousel_product,
+$clevprca_discount = clevprca_get_discount_percentage(
+        $clevprca_product,
         'max'
 );
 // Texto accesible para el botón "Añadir al carrito".
-$clevers_product_carousel_aria_label = sprintf(
+$clevprca_aria_label = sprintf(
 /* translators: %s: product title. */
         esc_html__('Ver Producto', 'clevers-product-carousel'),
-        $clevers_product_carousel_title
+        $clevprca_title
 );
 ?>
 <div class="clevers-card preset-4-card"
-     data-product-id="<?php echo esc_attr($clevers_product_carousel_product->get_id()); ?>">
+     data-product-id="<?php echo esc_attr($clevprca_product->get_id()); ?>">
     <div class="clevers-card-image">
-        <a href="<?php echo esc_url($clevers_product_carousel_permalink); ?>" class="product-thumb" aria-label="<?php echo esc_attr( $clevers_product_carousel_title ); ?>">
-            <?php if ($clevers_product_carousel_discount) : ?>
-                <?php echo wp_kses_post( clevers_product_carousel_render_discount_badge( (int) $clevers_product_carousel_discount, $settings, 'badge-discount' ) ); ?>
+        <a href="<?php echo esc_url($clevprca_permalink); ?>" class="product-thumb" aria-label="<?php echo esc_attr( $clevprca_title ); ?>">
+            <?php if ($clevprca_discount) : ?>
+                <?php echo wp_kses_post( clevprca_render_discount_badge( (int) $clevprca_discount, $settings, 'badge-discount' ) ); ?>
             <?php endif; ?>
 
-            <?php echo wp_kses_post( clevers_product_carousel_add_lazy_loading( $clevers_product_carousel_img ) ); ?>
+            <?php echo wp_kses_post( clevprca_add_lazy_loading( $clevprca_img ) ); ?>
 
         </a>
-            <a href="<?php echo esc_url($clevers_product_carousel_permalink); ?>" class="button select-options" aria-label="<?php echo esc_attr( $clevers_product_carousel_aria_label ); ?>">
+            <a href="<?php echo esc_url($clevprca_permalink); ?>" class="button select-options" aria-label="<?php echo esc_attr( $clevprca_aria_label ); ?>">
                 <?php esc_html_e('Ver Producto', 'clevers-product-carousel'); ?>
             </a>
 
     </div>
 
     <div class="product-info">
-        <a href="<?php echo esc_url($clevers_product_carousel_permalink); ?>" class="product-title">
-            <?php echo esc_html($clevers_product_carousel_title); ?>
+        <a href="<?php echo esc_url($clevprca_permalink); ?>" class="product-title">
+            <?php echo esc_html($clevprca_title); ?>
         </a>
 
         <div class="price-area">
-            <?php echo wp_kses_post($clevers_product_carousel_price_html); ?>
+            <?php echo wp_kses_post($clevprca_price_html); ?>
         </div>
     </div>
 </div>

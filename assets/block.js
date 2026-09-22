@@ -22,13 +22,13 @@
 
     var data = useSelect(function (select) {
       var core = select("core");
-      var records = core.getEntityRecords("postType", "clevers_carousel", {
+      var records = core.getEntityRecords("postType", "cleverspr_carousel", {
         per_page: -1,
         status: "publish,draft,pending,private"
       });
       var isResolving = core.isResolving("getEntityRecords", [
         "postType",
-        "clevers_carousel",
+        "cleverspr_carousel",
         { per_page: -1, status: "publish,draft,pending,private" }
       ]);
 
@@ -94,7 +94,7 @@
     );
   }
 
-  registerBlockType("clevers-product-carousel/carousel", {
+  registerBlockType("cleverspr/carousel", {
     apiVersion: 2,
     title: __("Clevers Product Carousel", "clevers-product-carousel"),
     icon: "images-alt2",

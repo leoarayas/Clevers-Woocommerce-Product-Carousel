@@ -11,10 +11,14 @@ final class I18nComplianceTest extends TestCase {
 		$this->assertStringContainsString( 'Text Domain: ' . self::TEXT_DOMAIN, $bootstrap );
 	}
 
-	public function test_plugin_loads_text_domain(): void {
+	public function test_plugin_does_not_call_legacy_load_plugin_textdomain(): void {
 		$bootstrap = file_get_contents( dirname( __DIR__, 2 ) . '/clevers-product-carousel.php' );
 		$this->assertIsString( $bootstrap );
-		$this->assertMatchesRegularExpression(
+		// WordPress 4.6+ loads translations for plugins on wordpress.org
+		// automatically on `init`, so load_plugin_textdomain() is no longer
+		// required. The plugin deliberately omits it (see the comment in the
+		// main plugin file).
+		$this->assertDoesNotMatchRegularExpression(
 			"/load_plugin_textdomain\\(\\s*'clevers-product-carousel'\\s*,/",
 			$bootstrap
 		);

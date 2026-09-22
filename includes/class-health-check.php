@@ -4,8 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Clevers_Product_Carousel_Health_Check {
-	const RESULT_TRANSIENT = 'clv_activation_health_check';
+class CLEVPRCA_Health_Check {
+	const RESULT_TRANSIENT = 'clevprca_activation_health_check';
 
 	/**
 	 * Build a compatibility matrix with actionable diagnostics.
@@ -15,7 +15,7 @@ class Clevers_Product_Carousel_Health_Check {
 	public static function build_report() {
 		global $wp_version;
 
-		$required_wp  = '5.8';
+		$required_wp  = '6.0';
 		$required_php = '7.4';
 
 		$uploads = function_exists( 'wp_upload_dir' ) ? wp_upload_dir() : array();
@@ -50,6 +50,7 @@ class Clevers_Product_Carousel_Health_Check {
 				__( 'Uploads directory writable', 'clevers-product-carousel' ),
 				__( 'Writable', 'clevers-product-carousel' ),
 				$uploads_path ? $uploads_path : __( 'Unavailable', 'clevers-product-carousel' ),
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- Read-only diagnostic check, not a mutation; WP_Filesystem is overkill for a permission probe.
 				$uploads_path ? is_writable( $uploads_path ) : false,
 				__( 'Grant write permission to wp-content/uploads for media and cache files.', 'clevers-product-carousel' )
 			),

@@ -4,10 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Clevers_Product_Carousel_Render {
+class CLEVPRCA_Render {
 
 	public function init(): void {
-		add_shortcode( 'clevers_carousel', array( $this, 'shortcode' ) );
+		add_shortcode( 'cleverspr_carousel', array( $this, 'shortcode' ) );
 		add_action( 'init', array( $this, 'register_block_type' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'maybe_enqueue_assets' ) );
 
@@ -34,21 +34,18 @@ class Clevers_Product_Carousel_Render {
 		}
 
 		$content       = (string) $post->post_content;
-		$has_shortcode = has_shortcode( $content, 'clevers_carousel' );
-		$has_block     = function_exists( 'has_block' ) && (
-			has_block( 'clevers-product-carousel/carousel', $post ) ||
-			has_block( 'clevers/carousel', $post )
-		);
+		$has_shortcode = has_shortcode( $content, 'cleverspr_carousel' );
+		$has_block     = function_exists( 'has_block' ) && has_block( 'cleverspr/carousel', $post );
 
 		if ( ! $has_shortcode && ! $has_block ) {
 			return;
 		}
 
-		wp_enqueue_style( 'clv-slick' );
-		wp_enqueue_style( 'clv-slick-theme' );
-		wp_enqueue_style( 'clv-carousel' );
-		wp_enqueue_script( 'clv-slick' );
-		wp_enqueue_script( 'clv-carousel' );
+		wp_enqueue_style( 'clevprca-slick' );
+		wp_enqueue_style( 'clevprca-slick-theme' );
+		wp_enqueue_style( 'clevprca-carousel' );
+		wp_enqueue_script( 'clevprca-slick' );
+		wp_enqueue_script( 'clevprca-carousel' );
 	}
 
 	/** @param array<string, mixed>|string $atts */
@@ -62,7 +59,13 @@ class Clevers_Product_Carousel_Render {
 			$atts
 		);
 
-		return $this->render_carousel( (int) $atts['id'] );
+		/**
+		 * The returned HTML may be modified by third-party code via the
+		 * `cleverspr_carousel/rendered_html` filter. Wrap the final output in
+		 * wp_kses_post() so any untrusted markup added through the filter is
+		 * stripped before reaching the page (defense in depth).
+		 */
+		return wp_kses_post( $this->render_carousel( (int) $atts['id'] ) );
 	}
 
 	public function register_block_type(): void {
@@ -70,9 +73,9 @@ class Clevers_Product_Carousel_Render {
 			return;
 		}
 
-		$handle = 'clv-carousel-block-editor';
-		$src    = CLV_URL . 'assets/block.js';
-		$path   = CLV_DIR . 'assets/block.js';
+		$handle = 'clevprca-carousel-block-editor';
+		$src    = CLEVPRCA_URL . 'assets/block.js';
+		$path   = CLEVPRCA_DIR . 'assets/block.js';
 		$ver    = file_exists( $path ) ? (string) filemtime( $path ) : '1.0.0';
 
 		wp_register_script(
@@ -84,7 +87,7 @@ class Clevers_Product_Carousel_Render {
 		);
 
 		register_block_type(
-			'clevers-product-carousel/carousel',
+			'cleverspr/carousel',
 			array(
 				'api_version'     => 2,
 				'editor_script'   => $handle,
@@ -101,8 +104,11 @@ class Clevers_Product_Carousel_Render {
 
 	/** @param array<string, mixed> $attributes */
 	public function render_block( array $attributes ): string {
-		$carousel_id = clevers_product_carousel_to_int( $attributes['carouselId'] ?? null );
-		return $this->render_carousel( $carousel_id );
+		$carousel_id = clevprca_to_int( $attributes['carouselId'] ?? null );
+
+		// See note in shortcode(): wp_kses_post() defends against untrusted HTML
+		// injected through the cleverspr_carousel/rendered_html filter.
+		return wp_kses_post( $this->render_carousel( $carousel_id ) );
 	}
 
 	public function render_carousel( int $carousel_id ): string {
@@ -111,35 +117,35 @@ class Clevers_Product_Carousel_Render {
 		}
 
 		$carousel = get_post( $carousel_id );
-		if ( ! $carousel || CLV_SLUG !== $carousel->post_type ) {
+		if ( ! $carousel || CLEVPRCA_SLUG !== $carousel->post_type ) {
 			return '';
 		}
 
-		$args     = clevers_product_carousel_build_query_args( $carousel_id );
-		$settings = clevers_product_carousel_get_settings( $carousel_id );
+		$args     = clevprca_build_query_args( $carousel_id );
+		$settings = clevprca_get_settings( $carousel_id );
 
-		wp_enqueue_style( 'clv-slick' );
-		wp_enqueue_style( 'clv-slick-theme' );
-		wp_enqueue_style( 'clv-carousel' );
-		wp_enqueue_script( 'clv-slick' );
-		wp_enqueue_script( 'clv-carousel' );
+		wp_enqueue_style( 'clevprca-slick' );
+		wp_enqueue_style( 'clevprca-slick-theme' );
+		wp_enqueue_style( 'clevprca-carousel' );
+		wp_enqueue_script( 'clevprca-slick' );
+		wp_enqueue_script( 'clevprca-carousel' );
 
 		$this->enqueue_inline_vars( $carousel_id, $settings );
 
-		$ver       = (int) get_post_meta( $carousel_id, '_clv_cache_version', true );
-		$bump      = (int) get_option( 'clv_global_cache_bump', 0 );
-		$cache_key = 'clv_carousel_' . $carousel_id . '_v' . $ver . '_g' . $bump . '_' .
+		$ver       = (int) get_post_meta( $carousel_id, '_clevprca_cache_version', true );
+		$bump      = (int) get_option( 'clevprca_global_cache_bump', 0 );
+		$cache_key = 'cleverspr_carousel_' . $carousel_id . '_v' . $ver . '_g' . $bump . '_' .
 			md5( wp_json_encode( $args ) . '|' . wp_json_encode( $settings ) );
 
 		$html = get_transient( $cache_key );
 		if ( false !== $html ) {
 			$html = $this->inject_brizy_editor_preview_css( (string) $html );
-			return (string) apply_filters( 'clevers_carousel/rendered_html', $html, $carousel_id, $settings, true );
+			return (string) apply_filters( 'cleverspr_carousel/rendered_html', $html, $carousel_id, $settings, true );
 		}
 
 		$start_time = microtime( true );
 		$products   = ( new WC_Product_Query( $args ) )->get_products();
-		$products   = apply_filters( 'clevers_carousel/products', $products, $carousel_id, $args, $settings );
+		$products   = apply_filters( 'cleverspr_carousel/products', $products, $carousel_id, $args, $settings );
 		$pending    = is_array( $products ) ? count( $products ) : 0;
 
 		// Save global product to restore later.
@@ -149,20 +155,20 @@ class Clevers_Product_Carousel_Render {
 
 		ob_start();
 		try {
-			do_action( 'clevers_carousel/before', $carousel_id, $settings, $products );
-			do_action( 'clevers_carousel_before_render', $carousel_id, $settings, $products );
+			do_action( 'cleverspr_carousel/before', $carousel_id, $settings, $products );
+			do_action( 'cleverspr_carousel_before_render', $carousel_id, $settings, $products );
 
-			$template_rel = 'carousels/carousel-' . clevers_product_carousel_to_int( $settings['preset'] ?? null, 1 ) . '.php';
-			$template_rel = apply_filters( 'clevers_carousel/carousel_template_relpath', $template_rel, $carousel_id, $settings, $products );
-			include clevers_product_carousel_locate_template( $template_rel );
+			$template_rel = 'carousels/carousel-' . clevprca_to_int( $settings['preset'] ?? null, 1 ) . '.php';
+			$template_rel = apply_filters( 'cleverspr_carousel/carousel_template_relpath', $template_rel, $carousel_id, $settings, $products );
+			include clevprca_locate_template( $template_rel );
 
-			do_action( 'clevers_carousel/after', $carousel_id, $settings, $products );
-			do_action( 'clevers_carousel_after_render', $carousel_id, $settings, $products );
+			do_action( 'cleverspr_carousel/after', $carousel_id, $settings, $products );
+			do_action( 'cleverspr_carousel_after_render', $carousel_id, $settings, $products );
 			$html = (string) ob_get_clean();
 		} catch ( Throwable $e ) {
 			ob_end_clean();
 			$elapsed_ms = max( 0, ( microtime( true ) - $start_time ) * 1000 );
-			clevers_product_carousel_update_queue_metrics(
+			clevprca_update_queue_metrics(
 				$carousel_id,
 				$pending,
 				0,
@@ -178,7 +184,7 @@ class Clevers_Product_Carousel_Render {
 		// phpcs:enable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
 
 		$elapsed_ms = max( 0, ( microtime( true ) - $start_time ) * 1000 );
-		clevers_product_carousel_update_queue_metrics(
+		clevprca_update_queue_metrics(
 			$carousel_id,
 			0,
 			$pending,
@@ -186,11 +192,11 @@ class Clevers_Product_Carousel_Render {
 			$pending > 0 ? ( $elapsed_ms / $pending ) : $elapsed_ms
 		);
 
-		$cache_ttl = (int) apply_filters( 'clevers_carousel/cache_ttl', 10 * MINUTE_IN_SECONDS, $carousel_id, $settings, $args );
+		$cache_ttl = (int) apply_filters( 'cleverspr_carousel/cache_ttl', 10 * MINUTE_IN_SECONDS, $carousel_id, $settings, $args );
 		set_transient( $cache_key, $html, max( MINUTE_IN_SECONDS, $cache_ttl ) );
 
 		$html = $this->inject_brizy_editor_preview_css( (string) $html );
-		return (string) apply_filters( 'clevers_carousel/rendered_html', $html, $carousel_id, $settings, false );
+		return (string) apply_filters( 'cleverspr_carousel/rendered_html', $html, $carousel_id, $settings, false );
 	}
 
 	/**
@@ -198,31 +204,29 @@ class Clevers_Product_Carousel_Render {
 	 * Inject a scoped CSS-only horizontal preview that applies only inside Brizy
 	 * shortcode wrappers, without affecting the frontend.
 	 *
+	 * The CSS is enqueued via wp_add_inline_style() (proper WordPress enqueue
+	 * pipeline) rather than concatenated as an inline <style> tag into the
+	 * rendered HTML.
+	 *
 	 * @param string $html Rendered shortcode HTML.
 	 * @return string
 	 */
 	private function inject_brizy_editor_preview_css( string $html ): string {
-	if ( '' === $html ) {
-		return $html;
-	}
-	if ( ! clevers_product_carousel_is_brizy_editor_preview_request() ) {
-		return $html;
-	}
-
-	$marker = '<!-- Clevers Carousel Brizy preview CSS -->';
-		if ( false !== strpos( $html, $marker ) ) {
+		if ( '' === $html ) {
+			return $html;
+		}
+		if ( ! clevprca_is_brizy_editor_preview_request() ) {
 			return $html;
 		}
 
-		$css  = $marker . "\n";
-		$css .= '<style>';
-		$css .= '.brz-wp-shortcode .clevers-product-carousel .slick-carousel:not(.slick-initialized){display:grid!important;grid-auto-flow:column!important;grid-auto-columns:calc(100%/var(--clv-fallback-desktop,4))!important;gap:16px!important;overflow-x:auto!important;overflow-y:hidden!important;align-items:stretch!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;}';
+		$css  = '.brz-wp-shortcode .clevers-product-carousel .slick-carousel:not(.slick-initialized){display:grid!important;grid-auto-flow:column!important;grid-auto-columns:calc(100%/var(--clevprca-fallback-desktop,4))!important;gap:16px!important;overflow-x:auto!important;overflow-y:hidden!important;align-items:stretch!important;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;}';
 		$css .= '.brz-wp-shortcode .clevers-product-carousel .slick-carousel:not(.slick-initialized) .carousel-item{min-width:0;scroll-snap-align:start;}';
-		$css .= '@media (max-width:1024px){.brz-wp-shortcode .clevers-product-carousel .slick-carousel:not(.slick-initialized){grid-auto-columns:calc(100%/var(--clv-fallback-tablet,2))!important;}}';
-		$css .= '@media (max-width:768px){.brz-wp-shortcode .clevers-product-carousel .slick-carousel:not(.slick-initialized){grid-auto-columns:calc(100%/var(--clv-fallback-mobile,1))!important;}}';
-		$css .= '</style>' . "\n";
+		$css .= '@media (max-width:1024px){.brz-wp-shortcode .clevers-product-carousel .slick-carousel:not(.slick-initialized){grid-auto-columns:calc(100%/var(--clevprca-fallback-tablet,2))!important;}}';
+		$css .= '@media (max-width:768px){.brz-wp-shortcode .clevers-product-carousel .slick-carousel:not(.slick-initialized){grid-auto-columns:calc(100%/var(--clevprca-fallback-mobile,1))!important;}}';
 
-		return $css . $html;
+		wp_add_inline_style( 'clevprca-carousel', $css );
+
+		return $html;
 	}
 
 
@@ -248,7 +252,7 @@ class Clevers_Product_Carousel_Render {
 				continue;
 			}
 
-			$sanitized = clevers_product_carousel_sanitize_css_value( $settings[ $setting_key ] );
+			$sanitized = clevprca_sanitize_css_value( $settings[ $setting_key ] );
 			if ( '' === $sanitized ) {
 				continue;
 			}
@@ -256,7 +260,7 @@ class Clevers_Product_Carousel_Render {
 			$vars[] = $css_var . ':' . $sanitized . ';';
 		}
 
-		$vars = apply_filters( 'clevers_carousel_css_vars', $vars, $carousel_id, $settings, $vars_map );
+		$vars = apply_filters( 'cleverspr_carousel_css_vars', $vars, $carousel_id, $settings, $vars_map );
 		if ( ! is_array( $vars ) ) {
 			$vars = array();
 		}
@@ -265,14 +269,14 @@ class Clevers_Product_Carousel_Render {
 			return;
 		}
 
-		$inline = '#clevers-product-carousel-' . $carousel_id . '{' . implode( '', array_map( static function ( $value ): string { return clevers_product_carousel_to_string( $value ); }, $vars ) ) . '}';
-		wp_add_inline_style( 'clv-carousel', $inline );
+		$inline = '#clevers-product-carousel-' . $carousel_id . '{' . implode( '', array_map( static function ( $value ): string { return clevprca_to_string( $value ); }, $vars ) ) . '}';
+		wp_add_inline_style( 'clevprca-carousel', $inline );
 	}
 
 	public function invalidate_cache(): void {
 		update_option(
-			'clv_global_cache_bump',
-			(int) get_option( 'clv_global_cache_bump', 0 ) + 1,
+			'clevprca_global_cache_bump',
+			(int) get_option( 'clevprca_global_cache_bump', 0 ) + 1,
 			false
 		);
 	}
@@ -334,19 +338,19 @@ class Clevers_Product_Carousel_Render {
 /**
  * Helper functions for templates.
  *
- * @param WC_Product $clevers_product_carousel_product Producto.
+ * @param WC_Product $clevprca_product Producto.
  * @param array<string, mixed> $settings Ajustes.
  * @return void
  */
-function clevers_product_carousel_render_card( $clevers_product_carousel_product, $settings ) {
+function clevprca_render_card( $clevprca_product, $settings ) {
 	// Compatibilidad con plantillas WooCommerce que usan global $product.
 	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- WooCommerce template compatibility.
-	$GLOBALS['product'] = $clevers_product_carousel_product;
+	$GLOBALS['product'] = $clevprca_product;
 
-	$tpl = 'cards/card-' . clevers_product_carousel_to_int( $settings['preset'] ?? null, 1 ) . '.php';
-	$tpl = apply_filters( 'clevers_carousel/card_template_relpath', $tpl, $clevers_product_carousel_product, $settings );
+	$tpl = 'cards/card-' . clevprca_to_int( $settings['preset'] ?? null, 1 ) . '.php';
+	$tpl = apply_filters( 'cleverspr_carousel/card_template_relpath', $tpl, $clevprca_product, $settings );
 
-	include clevers_product_carousel_locate_template( $tpl );
+	include clevprca_locate_template( $tpl );
 }
 
 /**
@@ -356,26 +360,26 @@ function clevers_product_carousel_render_card( $clevers_product_carousel_product
  * @param array<string, mixed> $settings Ajustes.
  * @return string
  */
-function clevers_product_carousel_get_slider_data_attributes( $carousel_id, array $settings ): string {
+function clevprca_get_slider_data_attributes( $carousel_id, array $settings ): string {
 	$attrs = array(
-		'data-carousel-id'      => (string) clevers_product_carousel_to_int( $carousel_id ),
-			'data-slides'           => (string) max( 1, min( 8, clevers_product_carousel_to_int( $settings['slidesToShow'] ?? null, 4 ) ) ),
-			'data-slides-tablet'    => (string) max( 1, min( 8, clevers_product_carousel_to_int( $settings['slidesToShowTablet'] ?? null, 2 ) ) ),
-			'data-slides-mobile'    => (string) max( 1, min( 8, clevers_product_carousel_to_int( $settings['slidesToShowMobile'] ?? null, 1 ) ) ),
+		'data-carousel-id'      => (string) clevprca_to_int( $carousel_id ),
+			'data-slides'           => (string) max( 1, min( 8, clevprca_to_int( $settings['slidesToShow'] ?? null, 4 ) ) ),
+			'data-slides-tablet'    => (string) max( 1, min( 8, clevprca_to_int( $settings['slidesToShowTablet'] ?? null, 2 ) ) ),
+			'data-slides-mobile'    => (string) max( 1, min( 8, clevprca_to_int( $settings['slidesToShowMobile'] ?? null, 1 ) ) ),
 		'data-autoplay'         => ! empty( $settings['autoplay'] ) ? 'true' : 'false',
-		'data-speed'            => (string) max( 500, min( 60000, clevers_product_carousel_to_int( $settings['autoplayMs'] ?? null, 3000 ) ) ),
+		'data-speed'            => (string) max( 500, min( 60000, clevprca_to_int( $settings['autoplayMs'] ?? null, 3000 ) ) ),
 		'data-dots'             => ! empty( $settings['dots'] ) ? 'true' : 'false',
 		'data-arrows'           => ! empty( $settings['arrows'] ) ? 'true' : 'false',
 		'data-pause-on-hover'   => ! empty( $settings['pauseOnHover'] ) ? 'true' : 'false',
 		'data-pause-on-focus'   => ! empty( $settings['pauseOnFocus'] ) ? 'true' : 'false',
 			'data-reduced-motion'   => ! empty( $settings['reducedMotionAutoplayOff'] ) ? 'true' : 'false',
 			'data-builder-compat'   => ! empty( $settings['builder_compat_mode'] ) ? 'true' : 'false',
-			'data-builder-delay'    => (string) max( 0, min( 5000, clevers_product_carousel_to_int( $settings['builder_init_delay_ms'] ?? null ) ) ),
+			'data-builder-delay'    => (string) max( 0, min( 5000, clevprca_to_int( $settings['builder_init_delay_ms'] ?? null ) ) ),
 			'data-disable-center-on-builder' => ! empty( $settings['builder_disable_center_mode'] ) ? 'true' : 'false',
 	);
 
 	$attrs['style'] = sprintf(
-		'--clv-fallback-desktop:%1$d;--clv-fallback-tablet:%2$d;--clv-fallback-mobile:%3$d;',
+		'--clevprca-fallback-desktop:%1$d;--clevprca-fallback-tablet:%2$d;--clevprca-fallback-mobile:%3$d;',
 		(int) $attrs['data-slides'],
 		(int) $attrs['data-slides-tablet'],
 		(int) $attrs['data-slides-mobile']
@@ -383,11 +387,11 @@ function clevers_product_carousel_get_slider_data_attributes( $carousel_id, arra
 
 	// Brizy editor preview often renders shortcode HTML without running Slick JS.
 	// Force a horizontal, scrollable layout directly inline so the preview remains usable.
-	if ( clevers_product_carousel_is_brizy_editor_preview_request() ) {
-		$attrs['style'] .= 'display:grid;grid-auto-flow:column;grid-auto-columns:calc(100%/var(--clv-fallback-desktop,4));gap:16px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;';
+	if ( clevprca_is_brizy_editor_preview_request() ) {
+		$attrs['style'] .= 'display:grid;grid-auto-flow:column;grid-auto-columns:calc(100%/var(--clevprca-fallback-desktop,4));gap:16px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;';
 	}
 
-	$attrs = apply_filters( 'clevers_carousel/slider_data_attributes', $attrs, $carousel_id, $settings );
+	$attrs = apply_filters( 'cleverspr_carousel/slider_data_attributes', $attrs, $carousel_id, $settings );
 
 	$parts = array();
 	foreach ( $attrs as $name => $value ) {
@@ -402,7 +406,8 @@ function clevers_product_carousel_get_slider_data_attributes( $carousel_id, arra
  *
  * @return bool
  */
-function clevers_product_carousel_is_brizy_editor_preview_request(): bool {
+function clevprca_is_brizy_editor_preview_request(): bool {
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Read-only boolean probe (stripos) on request context, never persisted or echoed. wp_unslash() strips magic-quote slashes before substring matching.
 	$action = isset( $_REQUEST['action'] ) ? (string) wp_unslash( $_REQUEST['action'] ) : '';
 	if ( false !== stripos( $action, 'in-front-editor' ) ) {
 		return true;
@@ -414,10 +419,11 @@ function clevers_product_carousel_is_brizy_editor_preview_request(): bool {
 
 	if ( false !== stripos( $action, 'shortcode_content' ) ) {
 		$shortcode = isset( $_REQUEST['shortcode'] ) ? (string) wp_unslash( $_REQUEST['shortcode'] ) : '';
-		if ( false !== stripos( $shortcode, '[clevers_carousel' ) ) {
+		if ( false !== stripos( $shortcode, '[cleverspr_carousel' ) ) {
 			return true;
 		}
 	}
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 	$referer = wp_get_referer();
 	if ( is_string( $referer ) && false !== stripos( $referer, 'in-front-editor' ) ) {

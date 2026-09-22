@@ -1,15 +1,15 @@
 <?php
 
 define( 'ABSPATH', __DIR__ );
-define( 'CLV_DIR', dirname( __DIR__ ) . '/' );
-if ( ! defined( 'CLV_URL' ) ) {
-	define( 'CLV_URL', 'https://example.test/clevers-product-carousel/' );
+define( 'CLEVPRCA_DIR', dirname( __DIR__ ) . '/' );
+if ( ! defined( 'CLEVPRCA_URL' ) ) {
+	define( 'CLEVPRCA_URL', 'https://example.test/clevers-product-carousel/' );
 }
 if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
 	define( 'MINUTE_IN_SECONDS', 60 );
 }
-if ( ! defined( 'CLV_SLUG' ) ) {
-	define( 'CLV_SLUG', 'clevers_carousel' );
+if ( ! defined( 'CLEVPRCA_SLUG' ) ) {
+	define( 'CLEVPRCA_SLUG', 'cleverspr_carousel' );
 }
 
 $GLOBALS['mock_state'] = array(
@@ -47,6 +47,9 @@ function reset_mock_state() {
 }
 
 class WP_Post {
+	public $ID = 0;
+	public $post_title = '';
+	public $post_status = '';
 	public $post_content = '';
 	public $post_type = '';
 }
@@ -82,7 +85,7 @@ function get_post_meta( $id, $key = '', $single = false ) {
 
 	$entry = $GLOBALS['mock_state']['post_meta'][ $id ] ?? array();
 	$value = $entry[ $key ] ?? null;
-	if ( null === $value && '_clv_settings' === $key && is_array( $entry ) ) {
+	if ( null === $value && '_clevprca_settings' === $key && is_array( $entry ) ) {
 		// Backward compatibility for tests that store settings directly by post ID.
 		$value = $entry;
 	}
@@ -118,6 +121,7 @@ function delete_transient( $key ) { unset( $GLOBALS['mock_state']['transients'][
 function esc_html( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
 function esc_attr( $value ) { return htmlspecialchars( (string) $value, ENT_QUOTES, 'UTF-8' ); }
 function esc_url( $value ) { return filter_var( (string) $value, FILTER_SANITIZE_URL ); }
+function wp_kses_post( $value ) { return (string) $value; }
 function wp_get_attachment_image_src( $attachment_id, $size = 'thumbnail' ) { unset( $attachment_id, $size ); return false; }
 function get_attached_file( $attachment_id ) { unset( $attachment_id ); return false; }
 function load_plugin_textdomain( $domain, $deprecated = false, $plugin_rel_path = false ) { unset( $domain, $deprecated, $plugin_rel_path ); return true; }
@@ -142,6 +146,8 @@ function do_action( $hook, ...$args ) {
 }
 function plugin_dir_path( $file ) { return dirname( $file ) . '/'; }
 function plugin_dir_url( $file ) { return 'https://example.test/' . basename( dirname( $file ) ) . '/'; }
+function trailingslashit( $value ) { return rtrim( (string) $value, '/\\' ) . '/'; }
+function wp_mkdir_p( $target ) { return is_dir( $target ) || ( @mkdir( $target, 0777, true ) && is_dir( $target ) ); }
 function locate_template( $template ) { unset( $template ); return $GLOBALS['mock_state']['locate_template_value']; }
 function shortcode_atts( $pairs, $atts ) { return array_merge( $pairs, (array) $atts ); }
 function is_admin() { return false; }

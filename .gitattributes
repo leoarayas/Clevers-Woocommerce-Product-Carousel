@@ -1,7 +1,16 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
-# Exclude development/CI files from GitHub source archives (zip/tar.gz).
+# Force LF for plugin source so the SVN export ships Unix line endings
+# (avoids "File has mixed line endings" warnings from Plugin Check).
+/clevers-product-carousel.php text eol=lf
+/readme.txt text eol=lf
+/uninstall.php text eol=lf
+/includes/*.php text eol=lf
+/templates/**/*.php text eol=lf
+/languages/*.php text eol=lf
+
+# Exclude development/CI files from GitHub source archives (zip/tar.gz)
 /.github export-ignore
 /.idea export-ignore
 /.gitignore export-ignore
@@ -9,8 +18,18 @@
 /.distignore export-ignore
 /.DS_Store export-ignore
 /.release-build export-ignore
+/.phpunit.result.cache export-ignore
 /bin export-ignore
 /tests export-ignore
+/vendor export-ignore
+/composer.json export-ignore
+/composer.lock export-ignore
+/phpstan.neon export-ignore
+/phpstan.neon.dist export-ignore
+/phpunit.xml.dist export-ignore
+/phpcs.xml.dist export-ignore
 /README.md export-ignore
 /RELEASING.md export-ignore
+/ROADMAP.md export-ignore
 /Makefile export-ignore
+/CONTRIBUTING.md export-ignore

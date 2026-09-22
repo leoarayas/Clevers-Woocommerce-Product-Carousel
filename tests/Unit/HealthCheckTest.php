@@ -4,11 +4,11 @@ use PHPUnit\Framework\TestCase;
 
 final class HealthCheckTest extends TestCase {
 	public function test_command_exists_rejects_unsafe_names(): void {
-		$this->assertFalse( Clevers_Product_Carousel_Health_Check::command_exists( 'bad;rm -rf /' ) );
+		$this->assertFalse( CLEVPRCA_Health_Check::command_exists( 'bad;rm -rf /' ) );
 	}
 
 	public function test_build_report_contains_compatibility_matrix(): void {
-		$report = Clevers_Product_Carousel_Health_Check::build_report();
+		$report = CLEVPRCA_Health_Check::build_report();
 
 		$this->assertIsArray( $report );
 		$this->assertArrayHasKey( 'checks', $report );
@@ -20,8 +20,8 @@ final class HealthCheckTest extends TestCase {
 	}
 
 	public function test_run_on_activation_stores_report_transient(): void {
-		Clevers_Product_Carousel_Health_Check::run_on_activation();
+		CLEVPRCA_Health_Check::run_on_activation();
 
-		$this->assertArrayHasKey( Clevers_Product_Carousel_Health_Check::RESULT_TRANSIENT, $GLOBALS['mock_state']['set_transients'] );
+		$this->assertArrayHasKey( CLEVPRCA_Health_Check::RESULT_TRANSIENT, $GLOBALS['mock_state']['set_transients'] );
 	}
 }

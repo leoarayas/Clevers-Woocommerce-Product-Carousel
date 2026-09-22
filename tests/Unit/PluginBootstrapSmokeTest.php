@@ -13,6 +13,6 @@ final class PluginBootstrapSmokeTest extends TestCase {
 		$this->assertArrayHasKey( 'init', $GLOBALS['mock_state']['actions'] );
 		$this->assertArrayHasKey( 'after_setup_theme', $GLOBALS['mock_state']['actions'] );
 		$this->assertArrayHasKey( 'wp_enqueue_scripts', $GLOBALS['mock_state']['actions'] );
-		$this->assertArrayHasKey( 'clevers_carousel', $GLOBALS['mock_state']['shortcodes'] );
+		$this->assertArrayHasKey( 'cleverspr_carousel', $GLOBALS['mock_state']['shortcodes'] );
 	}
 }

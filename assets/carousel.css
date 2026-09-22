@@ -30,7 +30,7 @@
 .clevers-product-carousel .slick-carousel:not(.slick-initialized) {
     display: grid;
     grid-auto-flow: column;
-    grid-auto-columns: calc(100% / var(--clv-fallback-desktop, 4));
+    grid-auto-columns: calc(100% / var(--clevprca-fallback-desktop, 4));
     gap: 16px;
     align-items: stretch;
     overflow-x: auto;
@@ -46,13 +46,13 @@
 
 @media (max-width: 1024px) {
     .clevers-product-carousel .slick-carousel:not(.slick-initialized) {
-        grid-auto-columns: calc(100% / var(--clv-fallback-tablet, 2));
+        grid-auto-columns: calc(100% / var(--clevprca-fallback-tablet, 2));
     }
 }
 
 @media (max-width: 768px) {
     .clevers-product-carousel .slick-carousel:not(.slick-initialized) {
-        grid-auto-columns: calc(100% / var(--clv-fallback-mobile, 1));
+        grid-auto-columns: calc(100% / var(--clevprca-fallback-mobile, 1));
     }
 }
 
@@ -282,7 +282,7 @@ a.clevers-button.ajax_add_to_cart.add_to_cart_button:focus {
 }
 
 /* Badge circular negro con texto amarillo (40%) */
-.clevers-product-carousel.preset-2 .clv-badge-round {
+.clevers-product-carousel.preset-2 .clevprca-badge-round {
     position: absolute;
     top: 8px;
     right: 8px;
@@ -554,7 +554,7 @@ a.clevers-button.ajax_add_to_cart.add_to_cart_button:focus {
     background: var(--clevers-secondary);
 }
 
-.clevers_product_carousel-badge-discount {
+.clevprca-badge-discount {
     display: inline-flex;
     align-items: center;
     justify-content: center;

@@ -13,17 +13,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 	id="clevers-product-carousel-<?php echo (int) $carousel_id; ?>"
 	role="region"
 	aria-roledescription="carousel"
-	aria-label="<?php echo esc_attr( sprintf( __( 'Product carousel %d', 'clevers-product-carousel' ), (int) $carousel_id ) ); ?>"
+	aria-label="<?php echo esc_attr( sprintf( /* translators: %d: carousel ID. */ __( 'Product carousel %d', 'clevers-product-carousel' ), (int) $carousel_id ) ); ?>"
 >
 	<?php if ( ! empty( $products ) ) : ?>
 		<div
 			class="slick-carousel"
-			<?php echo clevers_product_carousel_get_slider_data_attributes( $carousel_id, $settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+			<?php echo clevprca_get_slider_data_attributes( $carousel_id, $settings ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 			data-center="true"
 		>
-			<?php foreach ( $products as $clevers_product_carousel_product ) : ?>
+			<?php foreach ( $products as $clevprca_product ) : ?>
 				<div class="carousel-item">
-					<?php clevers_product_carousel_render_card( $clevers_product_carousel_product, $settings ); ?>
+					<?php clevprca_render_card( $clevprca_product, $settings ); ?>
 				</div>
 			<?php endforeach; ?>
 		</div>

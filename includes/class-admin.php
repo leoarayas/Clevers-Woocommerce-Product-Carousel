@@ -4,58 +4,107 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Clevers_Product_Carousel_Admin {
+class CLEVPRCA_Admin {
 
 	public function init() {
 		add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
-		add_action( 'save_post_' . CLV_SLUG, array( $this, 'save_meta_box' ), 10, 2 );
+		add_action( 'save_post_' . CLEVPRCA_SLUG, array( $this, 'save_meta_box' ), 10, 2 );
 		add_filter( 'post_row_actions', array( $this, 'add_row_actions' ), 10, 2 );
-		add_action( 'admin_action_clv_duplicate_carousel', array( $this, 'handle_duplicate_carousel' ) );
-		add_action( 'admin_action_clv_export_carousel_json', array( $this, 'handle_export_carousel_json' ) );
-		add_action( 'admin_post_clv_import_carousel_json', array( $this, 'handle_import_carousel_json' ) );
+		add_action( 'admin_action_clevprca_duplicate_carousel', array( $this, 'handle_duplicate_carousel' ) );
+		add_action( 'admin_action_clevprca_export_carousel_json', array( $this, 'handle_export_carousel_json' ) );
+		add_action( 'admin_post_clevprca_import_carousel_json', array( $this, 'handle_import_carousel_json' ) );
 		add_action( 'admin_notices', array( $this, 'render_admin_notices' ) );
-		add_action( 'wp_ajax_clv_search_products', array( $this, 'ajax_search_products' ) );
+		add_action( 'wp_ajax_clevprca_search_products', array( $this, 'ajax_search_products' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
+	}
+
+	/**
+	 * Enqueue admin CSS/JS only on the carousel edit screen.
+	 *
+	 * @param string $hook Current admin page hook suffix.
+	 * @return void
+	 */
+	public function enqueue_admin_assets( string $hook ): void {
+		if ( ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
+			return;
+		}
+
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen || CLEVPRCA_SLUG !== $screen->post_type ) {
+			return;
+		}
+
+		$css_path = CLEVPRCA_DIR . 'assets/admin.css';
+		$js_path  = CLEVPRCA_DIR . 'assets/admin.js';
+		$css_ver  = file_exists( $css_path ) ? (string) filemtime( $css_path ) : '1.0.0';
+		$js_ver   = file_exists( $js_path ) ? (string) filemtime( $js_path ) : '1.0.0';
+
+		wp_enqueue_style(
+			'clevprca-admin',
+			CLEVPRCA_URL . 'assets/admin.css',
+			array( 'wp-admin' ),
+			$css_ver
+		);
+
+		wp_enqueue_script(
+			'clevprca-admin',
+			CLEVPRCA_URL . 'assets/admin.js',
+			array(),
+			$js_ver,
+			true
+		);
+
+		wp_localize_script(
+			'clevprca-admin',
+			'clevprcaCarouselAdmin',
+			array(
+				'copyLabels' => array(
+					'copied' => __( 'Copied', 'clevers-product-carousel' ),
+					'idle'   => __( 'Copy report', 'clevers-product-carousel' ),
+				),
+			)
+		);
 	}
 
 	public function add_meta_boxes() {
 		add_meta_box(
-			'clv_carousel_settings',
+			'cleverspr_carousel_settings',
 			__( 'Carousel Settings', 'clevers-product-carousel' ),
 			array( $this, 'render_meta_box' ),
-			CLV_SLUG,
+			CLEVPRCA_SLUG,
 			'normal',
 			'high'
 		);
 
 		add_meta_box(
-			'clv_carousel_shortcode',
+			'cleverspr_carousel_shortcode',
 			__( 'Shortcode & Preview', 'clevers-product-carousel' ),
 			array( $this, 'render_shortcode_meta_box' ),
-			CLV_SLUG,
+			CLEVPRCA_SLUG,
 			'side',
 			'high'
 		);
 
 		add_meta_box(
-			'clv_carousel_diagnostics',
+			'cleverspr_carousel_diagnostics',
 			__( 'Diagnostics', 'clevers-product-carousel' ),
 			array( $this, 'render_diagnostics_meta_box' ),
-			CLV_SLUG,
+			CLEVPRCA_SLUG,
 			'side',
 			'low'
 		);
 	}
 
 	public function render_shortcode_meta_box( $post ) {
-		$shortcode = sprintf( '[clevers_carousel id="%d"]', (int) $post->ID );
-		$meta      = clevers_product_carousel_get_carousel_meta( $post->ID );
+		$shortcode = sprintf( '[cleverspr_carousel id="%d"]', (int) $post->ID );
+		$meta      = clevprca_get_carousel_meta( $post->ID );
 		$preset    = max( 1, min( 4, (int) ( $meta['preset'] ?? 1 ) ) );
 		?>
 		<p>
-			<label for="clv-shortcode-copy"><strong><?php esc_html_e( 'Use this shortcode', 'clevers-product-carousel' ); ?></strong></label>
+			<label for="clevprca-shortcode-copy"><strong><?php esc_html_e( 'Use this shortcode', 'clevers-product-carousel' ); ?></strong></label>
 			<input
 				type="text"
-				id="clv-shortcode-copy"
+				id="clevprca-shortcode-copy"
 				class="widefat"
 				readonly
 				onfocus="this.select();"
@@ -80,59 +129,46 @@ class Clevers_Product_Carousel_Admin {
 			</a>
 		</p>
 		<div style="margin-top:10px;">
-			<label for="clv-import-json-<?php echo esc_attr( (int) $post->ID ); ?>">
+			<label for="clevprca-import-json-<?php echo esc_attr( (int) $post->ID ); ?>">
 				<?php esc_html_e( 'Import JSON into this carousel', 'clevers-product-carousel' ); ?>
 			</label>
 			<textarea
-				id="clv-import-json-<?php echo esc_attr( (int) $post->ID ); ?>"
-				name="clv_import_json"
+				id="clevprca-import-json-<?php echo esc_attr( (int) $post->ID ); ?>"
+				name="clevprca_import_json"
 				rows="6"
 				class="widefat"
 				placeholder="<?php echo esc_attr( '{"preset":1,"limit":8}' ); ?>"
 			></textarea>
-			<p class="description">
-				<?php esc_html_e( 'Uses the main editor save flow to avoid nested forms.', 'clevers-product-carousel' ); ?>
-			</p>
-			<p>
-				<button type="submit" name="clv_apply_import_json" value="1" class="button button-primary"><?php esc_html_e( 'Import Settings', 'clevers-product-carousel' ); ?></button>
-			</p>
+		<p class="description">
+			<?php esc_html_e( 'Uses the main editor save flow to avoid nested forms.', 'clevers-product-carousel' ); ?>
+		</p>
+		<p>
+			<button type="submit" name="clevprca_apply_import_json" value="1" class="button button-primary"><?php esc_html_e( 'Import Settings', 'clevers-product-carousel' ); ?></button>
+		</p>
 		</div>
 
-		<style>
-			.clv-preview-shell { border: 1px solid #dcdcde; border-radius: 8px; padding: 10px; background: #fff; }
-			.clv-preview-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
-			.clv-preview-card { border: 1px solid #e2e4e7; border-radius: 6px; padding: 8px; background: #f6f7f7; min-height: 74px; position: relative; }
-			.clv-preview-card::before { content: ""; display: block; height: 24px; border-radius: 4px; background: linear-gradient(90deg, #e6e8eb, #f5f6f7, #e6e8eb); margin-bottom: 7px; }
-			.clv-preview-card::after { content: ""; display: block; height: 8px; border-radius: 4px; width: 75%; background: #d6d9dd; }
-			.clv-preview-shell[data-preset="2"] .clv-preview-card { border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
-			.clv-preview-shell[data-preset="3"] .clv-preview-card { background: #1f2937; border-color: #111827; }
-			.clv-preview-shell[data-preset="3"] .clv-preview-card::after { background: #9ca3af; }
-			.clv-preview-shell[data-preset="4"] .clv-preview-card { background: #ffffff; border-color: #e5e7eb; }
-			.clv-preview-label { margin: 0 0 8px; font-size: 12px; color: #50575e; }
-		</style>
-
-		<p class="clv-preview-label">
+		<p class="clevprca-preview-label">
 			<?php
 			printf(
 				/* translators: %d: preset number. */
 				esc_html__( 'Quick preview of Preset %d', 'clevers-product-carousel' ),
-				$preset
+				(int) $preset
 			);
 			?>
 		</p>
-		<div class="clv-preview-shell" id="clv-preset-preview-side" data-preset="<?php echo esc_attr( $preset ); ?>">
-			<div class="clv-preview-grid">
-				<div class="clv-preview-card"></div>
-				<div class="clv-preview-card"></div>
-				<div class="clv-preview-card"></div>
-				<div class="clv-preview-card"></div>
+		<div class="clevprca-preview-shell" id="clevprca-preset-preview-side" data-preset="<?php echo esc_attr( $preset ); ?>">
+			<div class="clevprca-preview-grid">
+				<div class="clevprca-preview-card"></div>
+				<div class="clevprca-preview-card"></div>
+				<div class="clevprca-preview-card"></div>
+				<div class="clevprca-preview-card"></div>
 			</div>
 		</div>
 		<?php
 	}
 
 	public function render_diagnostics_meta_box( $post ) {
-		$meta               = clevers_product_carousel_get_carousel_meta( $post->ID );
+		$meta               = clevprca_get_carousel_meta( $post->ID );
 		$manual_ids         = array_values( array_unique( array_filter( array_map( 'intval', (array) ( $meta['manual_product_ids'] ?? array() ) ) ) ) );
 		$valid_manual_ids   = array();
 		$invalid_manual_ids = array();
@@ -153,9 +189,9 @@ class Clevers_Product_Carousel_Admin {
 			'wp_version'               => get_bloginfo( 'version' ),
 			'woocommerce_active'       => class_exists( 'WooCommerce' ),
 			'jquery_registered'        => wp_script_is( 'jquery', 'registered' ),
-			'clv_slick_registered'     => wp_script_is( 'clv-slick', 'registered' ),
-			'clv_carousel_registered'  => wp_script_is( 'clv-carousel', 'registered' ),
-			'gutenberg_block_registered' => class_exists( 'WP_Block_Type_Registry' ) ? WP_Block_Type_Registry::get_instance()->is_registered( 'clevers-product-carousel/carousel' ) : false,
+			'clevprca_slick_registered'     => wp_script_is( 'clevprca-slick', 'registered' ),
+			'cleverspr_carousel_registered'  => wp_script_is( 'clevprca-carousel', 'registered' ),
+			'gutenberg_block_registered' => class_exists( 'WP_Block_Type_Registry' ) ? WP_Block_Type_Registry::get_instance()->is_registered( 'cleverspr/carousel' ) : false,
 			'manual_mode_enabled'      => ! empty( $meta['manual_products_enabled'] ),
 			'manual_ids_total'         => count( $manual_ids ),
 			'manual_ids_valid'         => $valid_manual_ids,
@@ -164,22 +200,22 @@ class Clevers_Product_Carousel_Admin {
 			'builder_init_delay_ms'    => (int) ( $meta['builder_init_delay_ms'] ?? 0 ),
 			'builder_disable_center_mode' => ! empty( $meta['builder_disable_center_mode'] ),
 		);
-		$queue_metrics = clevers_product_carousel_get_queue_metrics( (int) $post->ID );
+		$queue_metrics = clevprca_get_queue_metrics( (int) $post->ID );
 		$diag['queue_metrics'] = $queue_metrics;
 		?>
 		<p class="description"><?php esc_html_e( 'Quick environment and configuration checks for this carousel.', 'clevers-product-carousel' ); ?></p>
 		<ul style="margin:0 0 10px 16px; list-style:disc;">
 			<li><?php echo esc_html( class_exists( 'WooCommerce' ) ? __( 'WooCommerce active', 'clevers-product-carousel' ) : __( 'WooCommerce missing', 'clevers-product-carousel' ) ); ?></li>
 			<li><?php echo esc_html( ! empty( $meta['builder_compat_mode'] ) ? __( 'Builder compatibility mode ON', 'clevers-product-carousel' ) : __( 'Builder compatibility mode OFF', 'clevers-product-carousel' ) ); ?></li>
-			<li><?php echo esc_html( sprintf( __( 'Manual IDs: %1$d (%2$d invalid)', 'clevers-product-carousel' ), count( $manual_ids ), count( $invalid_manual_ids ) ) ); ?></li>
+			<li><?php echo esc_html( sprintf( /* translators: 1: total manual IDs, 2: invalid manual IDs count. */ __( 'Manual IDs: %1$d (%2$d invalid)', 'clevers-product-carousel' ), count( $manual_ids ), count( $invalid_manual_ids ) ) ); ?></li>
 		</ul>
 		<div style="border:1px solid #dcdcde;border-radius:6px;padding:8px;margin-bottom:10px;background:#fff;">
 			<p style="margin:0 0 8px;"><strong><?php esc_html_e( 'Queue observability', 'clevers-product-carousel' ); ?></strong></p>
 			<ul style="margin:0 0 6px 16px;list-style:disc;">
-				<li><?php echo esc_html( sprintf( __( 'Pending: %d', 'clevers-product-carousel' ), (int) $queue_metrics['pending'] ) ); ?></li>
-				<li><?php echo esc_html( sprintf( __( 'Processed: %d', 'clevers-product-carousel' ), (int) $queue_metrics['processed'] ) ); ?></li>
-				<li><?php echo esc_html( sprintf( __( 'Failed: %d', 'clevers-product-carousel' ), (int) $queue_metrics['failed'] ) ); ?></li>
-				<li><?php echo esc_html( sprintf( __( 'Avg time per product: %sms', 'clevers-product-carousel' ), number_format_i18n( (float) $queue_metrics['avg_time_ms_per_product'], 2 ) ) ); ?></li>
+				<li><?php echo esc_html( sprintf( /* translators: %d: pending count. */ __( 'Pending: %d', 'clevers-product-carousel' ), (int) $queue_metrics['pending'] ) ); ?></li>
+				<li><?php echo esc_html( sprintf( /* translators: %d: processed count. */ __( 'Processed: %d', 'clevers-product-carousel' ), (int) $queue_metrics['processed'] ) ); ?></li>
+				<li><?php echo esc_html( sprintf( /* translators: %d: failed count. */ __( 'Failed: %d', 'clevers-product-carousel' ), (int) $queue_metrics['failed'] ) ); ?></li>
+				<li><?php echo esc_html( sprintf( /* translators: %s: average time in milliseconds. */ __( 'Avg time per product: %sms', 'clevers-product-carousel' ), number_format_i18n( (float) $queue_metrics['avg_time_ms_per_product'], 2 ) ) ); ?></li>
 			</ul>
 			<?php if ( ! empty( $queue_metrics['last_error'] ) ) : ?>
 				<p style="margin:6px 0 0;color:#b32d2e;">
@@ -188,33 +224,17 @@ class Clevers_Product_Carousel_Admin {
 				</p>
 			<?php endif; ?>
 		</div>
-		<textarea id="clv-diagnostic-report" class="widefat" rows="10" readonly><?php echo esc_textarea( wp_json_encode( $diag, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ); ?></textarea>
+		<textarea id="clevprca-diagnostic-report" class="widefat" rows="10" readonly><?php echo esc_textarea( wp_json_encode( $diag, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) ); ?></textarea>
 		<p style="margin-top:8px;">
-			<button type="button" class="button button-secondary" id="clv-copy-diagnostic-report"><?php esc_html_e( 'Copy report', 'clevers-product-carousel' ); ?></button>
+			<button type="button" class="button button-secondary" id="clevprca-copy-diagnostic-report"><?php esc_html_e( 'Copy report', 'clevers-product-carousel' ); ?></button>
 		</p>
-		<script>
-			(function() {
-				var btn = document.getElementById('clv-copy-diagnostic-report');
-				var ta = document.getElementById('clv-diagnostic-report');
-				if (!btn || !ta) return;
-				btn.addEventListener('click', function() {
-					ta.focus();
-					ta.select();
-					try {
-						document.execCommand('copy');
-						btn.textContent = '<?php echo esc_js( __( 'Copied', 'clevers-product-carousel' ) ); ?>';
-						setTimeout(function(){ btn.textContent = '<?php echo esc_js( __( 'Copy report', 'clevers-product-carousel' ) ); ?>'; }, 1200);
-					} catch (e) {}
-				});
-			})();
-		</script>
 		<?php
 	}
 
 	public function render_meta_box( $post ) {
-		$meta = clevers_product_carousel_get_carousel_meta( $post->ID );
+		$meta = clevprca_get_carousel_meta( $post->ID );
 
-		wp_nonce_field( 'clv_save_carousel', 'clv_carousel_nonce' );
+		wp_nonce_field( 'clevprca_save_carousel', 'cleverspr_carousel_nonce' );
 
 		$preset       = max( 1, min( 4, (int) ( $meta['preset'] ?? 1 ) ) );
 		$limit        = max( 1, (int) ( $meta['limit'] ?? 8 ) );
@@ -259,37 +279,9 @@ class Clevers_Product_Carousel_Admin {
 			)
 		);
 		?>
-		<style>
-			.clv-field { margin: 12px 0; }
-			.clv-field label { display: block; font-weight: 600; margin-bottom: 4px; }
-			.clv-fieldset { border: 1px solid #dcdcde; border-radius: 8px; padding: 10px 12px; margin: 12px 0; }
-			.clv-fieldset legend { font-weight: 600; padding: 0 6px; }
-			.clv-inline-check { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; margin-bottom: 6px; font-weight: 400; }
-			.clv-categories-list { max-height: 180px; overflow: auto; border: 1px solid #dcdcde; border-radius: 6px; padding: 8px; background: #fff; }
-			.clv-categories-list label { display: flex; align-items: center; gap: 6px; font-weight: 400; margin: 0 0 6px; }
-			.clv-product-picker { border: 1px solid #dcdcde; border-radius: 6px; padding: 8px; background: #fff; }
-			.clv-product-picker-results { border: 1px solid #dcdcde; border-radius: 4px; margin-top: 6px; max-height: 140px; overflow: auto; background: #fff; }
-			.clv-product-picker-results button { display: block; width: 100%; text-align: left; padding: 6px 8px; border: 0; background: #fff; cursor: pointer; }
-			.clv-product-picker-results button:hover { background: #f0f6fc; }
-			.clv-selected-products { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
-			.clv-chip { display: inline-flex; align-items: center; gap: 6px; background: #f0f0f1; border: 1px solid #dcdcde; border-radius: 16px; padding: 4px 8px; }
-			.clv-chip button { border: 0; background: transparent; cursor: pointer; color: #b32d2e; font-weight: 700; padding: 0; }
-			.clv-grid-3 { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
-			.clv-preview-inline { border: 1px solid #dcdcde; border-radius: 8px; padding: 10px; background: #fff; margin-top: 10px; }
-			.clv-preview-inline .clv-preview-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
-			.clv-preview-inline .clv-preview-card { border: 1px solid #e2e4e7; border-radius: 6px; padding: 8px; background: #f6f7f7; min-height: 60px; }
-			.clv-preview-inline .clv-preview-card::before { content: ""; display: block; height: 16px; border-radius: 4px; background: #e6e8eb; margin-bottom: 6px; }
-			.clv-preview-inline .clv-preview-card::after { content: ""; display: block; height: 6px; border-radius: 4px; width: 70%; background: #d6d9dd; }
-			.clv-preview-inline[data-preset="2"] .clv-preview-card { border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
-			.clv-preview-inline[data-preset="3"] .clv-preview-card { background: #1f2937; border-color: #111827; }
-			.clv-preview-inline[data-preset="3"] .clv-preview-card::after { background: #9ca3af; }
-			.clv-preview-inline[data-preset="4"] .clv-preview-card { background: #ffffff; border-color: #e5e7eb; }
-			@media (max-width: 782px) { .clv-preview-inline .clv-preview-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .clv-grid-3 { grid-template-columns: 1fr; } }
-		</style>
-
-		<div class="clv-field">
-			<label for="clv-preset-select"><?php esc_html_e( 'Preset / Design', 'clevers-product-carousel' ); ?></label>
-			<select id="clv-preset-select" name="clv[preset]">
+		<div class="clevprca-field">
+			<label for="clevprca-preset-select"><?php esc_html_e( 'Preset / Design', 'clevers-product-carousel' ); ?></label>
+			<select id="clevprca-preset-select" name="clevprca[preset]">
 				<option value="1" <?php selected( $preset, 1 ); ?>>Preset 1</option>
 				<option value="2" <?php selected( $preset, 2 ); ?>>Preset 2</option>
 				<option value="3" <?php selected( $preset, 3 ); ?>>Preset 3</option>
@@ -297,28 +289,28 @@ class Clevers_Product_Carousel_Admin {
 			</select>
 		</div>
 
-		<div class="clv-preview-inline" id="clv-preset-preview-inline" data-preset="<?php echo esc_attr( $preset ); ?>">
+		<div class="clevprca-preview-inline" id="clevprca-preset-preview-inline" data-preset="<?php echo esc_attr( $preset ); ?>">
 			<p class="description" style="margin-top:0;">
 				<?php esc_html_e( 'Basic preset preview (layout style approximation).', 'clevers-product-carousel' ); ?>
 			</p>
-			<div class="clv-preview-grid">
-				<div class="clv-preview-card"></div>
-				<div class="clv-preview-card"></div>
-				<div class="clv-preview-card"></div>
-				<div class="clv-preview-card"></div>
+			<div class="clevprca-preview-grid">
+				<div class="clevprca-preview-card"></div>
+				<div class="clevprca-preview-card"></div>
+				<div class="clevprca-preview-card"></div>
+				<div class="clevprca-preview-card"></div>
 			</div>
 		</div>
 
-		<div class="clv-field">
-			<label for="clv-limit"><?php esc_html_e( 'Limit', 'clevers-product-carousel' ); ?></label>
-			<input id="clv-limit" type="number" min="1" max="48" name="clv[limit]" value="<?php echo esc_attr( $limit ); ?>"/>
+		<div class="clevprca-field">
+			<label for="clevprca-limit"><?php esc_html_e( 'Limit', 'clevers-product-carousel' ); ?></label>
+			<input id="clevprca-limit" type="number" min="1" max="48" name="clevprca[limit]" value="<?php echo esc_attr( $limit ); ?>"/>
 		</div>
 
-		<div class="clv-fieldset">
+		<div class="clevprca-fieldset">
 			<legend><?php esc_html_e( 'Sorting', 'clevers-product-carousel' ); ?></legend>
-			<div class="clv-field">
-				<label for="clv-orderby"><?php esc_html_e( 'Order by', 'clevers-product-carousel' ); ?></label>
-				<select id="clv-orderby" name="clv[orderby]">
+			<div class="clevprca-field">
+				<label for="clevprca-orderby"><?php esc_html_e( 'Order by', 'clevers-product-carousel' ); ?></label>
+				<select id="clevprca-orderby" name="clevprca[orderby]">
 					<?php foreach ( $this->get_orderby_options() as $key => $label ) : ?>
 						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $orderby, $key ); ?>>
 							<?php echo esc_html( $label ); ?>
@@ -326,9 +318,9 @@ class Clevers_Product_Carousel_Admin {
 					<?php endforeach; ?>
 				</select>
 			</div>
-			<div class="clv-field">
-				<label for="clv-order"><?php esc_html_e( 'Order', 'clevers-product-carousel' ); ?></label>
-				<select id="clv-order" name="clv[order]">
+			<div class="clevprca-field">
+				<label for="clevprca-order"><?php esc_html_e( 'Order', 'clevers-product-carousel' ); ?></label>
+				<select id="clevprca-order" name="clevprca[order]">
 					<?php foreach ( $this->get_order_options() as $key => $label ) : ?>
 						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $order, $key ); ?>>
 							<?php echo esc_html( $label ); ?>
@@ -338,18 +330,18 @@ class Clevers_Product_Carousel_Admin {
 			</div>
 		</div>
 
-		<div class="clv-field">
+		<div class="clevprca-field">
 			<label><?php esc_html_e( 'Product Categories', 'clevers-product-carousel' ); ?></label>
 			<?php if ( is_wp_error( $terms ) || empty( $terms ) ) : ?>
 				<p class="description"><?php esc_html_e( 'No product categories found yet.', 'clevers-product-carousel' ); ?></p>
 			<?php else : ?>
-				<div class="clv-categories-list">
+				<div class="clevprca-categories-list">
 					<?php foreach ( $terms as $term ) : ?>
-						<label for="<?php echo esc_attr( 'clv-cat-' . $term->term_id ); ?>">
+						<label for="<?php echo esc_attr( 'clevprca-cat-' . $term->term_id ); ?>">
 							<input
 								type="checkbox"
-								id="<?php echo esc_attr( 'clv-cat-' . $term->term_id ); ?>"
-								name="clv[categories][]"
+								id="<?php echo esc_attr( 'clevprca-cat-' . $term->term_id ); ?>"
+								name="clevprca[categories][]"
 								value="<?php echo esc_attr( $term->slug ); ?>"
 								<?php checked( in_array( $term->slug, $categories, true ) ); ?>
 							/>
@@ -362,41 +354,41 @@ class Clevers_Product_Carousel_Admin {
 			<p class="description"><?php esc_html_e( 'Leave empty to include products from all categories.', 'clevers-product-carousel' ); ?></p>
 		</div>
 
-		<div class="clv-fieldset">
+		<div class="clevprca-fieldset">
 			<legend><?php esc_html_e( 'Filters', 'clevers-product-carousel' ); ?></legend>
-			<div class="clv-field">
-				<label class="clv-inline-check">
-					<input type="checkbox" name="clv[manual_products_enabled]" <?php checked( $use_manual ); ?> />
+			<div class="clevprca-field">
+				<label class="clevprca-inline-check">
+					<input type="checkbox" name="clevprca[manual_products_enabled]" <?php checked( $use_manual ); ?> />
 					<?php esc_html_e( 'Use manual product selection (IDs)', 'clevers-product-carousel' ); ?>
 				</label>
 				<textarea
-					id="clv-manual-product-ids-csv"
-					name="clv[manual_product_ids_csv]"
+					id="clevprca-manual-product-ids-csv"
+					name="clevprca[manual_product_ids_csv]"
 					rows="3"
 					class="widefat"
 					style="display:none;"
 					placeholder="<?php echo esc_attr__( 'Example: 12, 54, 99', 'clevers-product-carousel' ); ?>"
 				><?php echo esc_textarea( implode( ', ', $manual_ids ) ); ?></textarea>
-				<div class="clv-product-picker" id="clv-product-picker" data-nonce="<?php echo esc_attr( wp_create_nonce( 'clv_search_products' ) ); ?>">
-					<label for="clv-product-search"><?php esc_html_e( 'Search products to add', 'clevers-product-carousel' ); ?></label>
-					<input type="search" id="clv-product-search" class="widefat" placeholder="<?php echo esc_attr__( 'Type product name...', 'clevers-product-carousel' ); ?>" />
-					<div id="clv-product-search-results" class="clv-product-picker-results" hidden></div>
-					<div id="clv-selected-products" class="clv-selected-products"></div>
+				<div class="clevprca-product-picker" id="clevprca-product-picker" data-nonce="<?php echo esc_attr( wp_create_nonce( 'clevprca_search_products' ) ); ?>">
+					<label for="clevprca-product-search"><?php esc_html_e( 'Search products to add', 'clevers-product-carousel' ); ?></label>
+					<input type="search" id="clevprca-product-search" class="widefat" placeholder="<?php echo esc_attr__( 'Type product name...', 'clevers-product-carousel' ); ?>" />
+					<div id="clevprca-product-search-results" class="clevprca-product-picker-results" hidden></div>
+					<div id="clevprca-selected-products" class="clevprca-selected-products"></div>
 				</div>
 				<p class="description">
 					<?php esc_html_e( 'When enabled, the carousel uses these WooCommerce product IDs (in this order) and ignores automatic product filters.', 'clevers-product-carousel' ); ?>
 				</p>
 			</div>
-			<label class="clv-inline-check">
-				<input type="checkbox" name="clv[on_sale]" <?php checked( $on_sale ); ?> />
+			<label class="clevprca-inline-check">
+				<input type="checkbox" name="clevprca[on_sale]" <?php checked( $on_sale ); ?> />
 				<?php esc_html_e( 'On Sale', 'clevers-product-carousel' ); ?>
 			</label>
-			<label class="clv-inline-check">
-				<input type="checkbox" name="clv[on_featured]" <?php checked( $on_featured ); ?> />
+			<label class="clevprca-inline-check">
+				<input type="checkbox" name="clevprca[on_featured]" <?php checked( $on_featured ); ?> />
 				<?php esc_html_e( 'Featured', 'clevers-product-carousel' ); ?>
 			</label>
-			<label class="clv-inline-check">
-				<input type="checkbox" name="clv[instock_only]" <?php checked( $instock_only ); ?> />
+			<label class="clevprca-inline-check">
+				<input type="checkbox" name="clevprca[instock_only]" <?php checked( $instock_only ); ?> />
 				<?php esc_html_e( 'In Stock Only', 'clevers-product-carousel' ); ?>
 			</label>
 			<p class="description" style="margin-bottom:0;">
@@ -408,68 +400,68 @@ class Clevers_Product_Carousel_Admin {
 
 		<h3><?php esc_html_e( 'Carousel Options', 'clevers-product-carousel' ); ?></h3>
 
-		<div class="clv-fieldset">
+		<div class="clevprca-fieldset">
 			<legend><?php esc_html_e( 'Responsive Slides', 'clevers-product-carousel' ); ?></legend>
-			<div class="clv-grid-3">
-				<div class="clv-field">
-					<label for="clv-slides-desktop"><?php esc_html_e( 'Desktop (>=1024px)', 'clevers-product-carousel' ); ?></label>
-					<input id="clv-slides-desktop" type="number" min="1" max="8" name="clv[slidesToShow]" value="<?php echo esc_attr( $slides ); ?>"/>
+			<div class="clevprca-grid-3">
+				<div class="clevprca-field">
+					<label for="clevprca-slides-desktop"><?php esc_html_e( 'Desktop (>=1024px)', 'clevers-product-carousel' ); ?></label>
+					<input id="clevprca-slides-desktop" type="number" min="1" max="8" name="clevprca[slidesToShow]" value="<?php echo esc_attr( $slides ); ?>"/>
 				</div>
-				<div class="clv-field">
-					<label for="clv-slides-tablet"><?php esc_html_e( 'Tablet (<1024px)', 'clevers-product-carousel' ); ?></label>
-					<input id="clv-slides-tablet" type="number" min="1" max="8" name="clv[slidesToShowTablet]" value="<?php echo esc_attr( $slides_tablet ); ?>"/>
+				<div class="clevprca-field">
+					<label for="clevprca-slides-tablet"><?php esc_html_e( 'Tablet (<1024px)', 'clevers-product-carousel' ); ?></label>
+					<input id="clevprca-slides-tablet" type="number" min="1" max="8" name="clevprca[slidesToShowTablet]" value="<?php echo esc_attr( $slides_tablet ); ?>"/>
 				</div>
-				<div class="clv-field">
-					<label for="clv-slides-mobile"><?php esc_html_e( 'Mobile (<768px)', 'clevers-product-carousel' ); ?></label>
-					<input id="clv-slides-mobile" type="number" min="1" max="8" name="clv[slidesToShowMobile]" value="<?php echo esc_attr( $slides_mobile ); ?>"/>
+				<div class="clevprca-field">
+					<label for="clevprca-slides-mobile"><?php esc_html_e( 'Mobile (<768px)', 'clevers-product-carousel' ); ?></label>
+					<input id="clevprca-slides-mobile" type="number" min="1" max="8" name="clevprca[slidesToShowMobile]" value="<?php echo esc_attr( $slides_mobile ); ?>"/>
 				</div>
 			</div>
 		</div>
 
-		<div class="clv-field">
-			<label class="clv-inline-check">
-				<input type="checkbox" name="clv[autoplay]" <?php checked( $autoplay ); ?> />
+		<div class="clevprca-field">
+			<label class="clevprca-inline-check">
+				<input type="checkbox" name="clevprca[autoplay]" <?php checked( $autoplay ); ?> />
 				<?php esc_html_e( 'Autoplay', 'clevers-product-carousel' ); ?>
 			</label>
 		</div>
 
-		<div class="clv-field">
-			<label for="clv-autoplay-ms"><?php esc_html_e( 'Autoplay Speed (ms)', 'clevers-product-carousel' ); ?></label>
-			<input id="clv-autoplay-ms" type="number" min="500" step="100" max="60000" name="clv[autoplayMs]" value="<?php echo esc_attr( $autoplay_ms ); ?>"/>
+		<div class="clevprca-field">
+			<label for="clevprca-autoplay-ms"><?php esc_html_e( 'Autoplay Speed (ms)', 'clevers-product-carousel' ); ?></label>
+			<input id="clevprca-autoplay-ms" type="number" min="500" step="100" max="60000" name="clevprca[autoplayMs]" value="<?php echo esc_attr( $autoplay_ms ); ?>"/>
 		</div>
 
-		<div class="clv-field">
-			<label class="clv-inline-check">
-				<input type="checkbox" name="clv[dots]" <?php checked( $dots ); ?> />
+		<div class="clevprca-field">
+			<label class="clevprca-inline-check">
+				<input type="checkbox" name="clevprca[dots]" <?php checked( $dots ); ?> />
 				<?php esc_html_e( 'Dots', 'clevers-product-carousel' ); ?>
 			</label>
-			<label class="clv-inline-check">
-				<input type="checkbox" name="clv[arrows]" <?php checked( $arrows ); ?> />
+			<label class="clevprca-inline-check">
+				<input type="checkbox" name="clevprca[arrows]" <?php checked( $arrows ); ?> />
 				<?php esc_html_e( 'Arrows', 'clevers-product-carousel' ); ?>
 			</label>
 		</div>
 
-		<div class="clv-fieldset">
+		<div class="clevprca-fieldset">
 			<legend><?php esc_html_e( 'Builder Compatibility', 'clevers-product-carousel' ); ?></legend>
-			<label class="clv-inline-check">
-				<input type="checkbox" name="clv[builder_compat_mode]" <?php checked( $builder_compat_mode ); ?> />
+			<label class="clevprca-inline-check">
+				<input type="checkbox" name="clevprca[builder_compat_mode]" <?php checked( $builder_compat_mode ); ?> />
 				<?php esc_html_e( 'Enable builder compatibility mode (Brizy/Elementor/etc.)', 'clevers-product-carousel' ); ?>
 			</label>
-			<div class="clv-field">
-				<label for="clv-builder-init-delay"><?php esc_html_e( 'Extra init delay (ms)', 'clevers-product-carousel' ); ?></label>
+			<div class="clevprca-field">
+				<label for="clevprca-builder-init-delay"><?php esc_html_e( 'Extra init delay (ms)', 'clevers-product-carousel' ); ?></label>
 				<input
-					id="clv-builder-init-delay"
+					id="clevprca-builder-init-delay"
 					type="number"
 					min="0"
 					max="5000"
 					step="50"
-					name="clv[builder_init_delay_ms]"
+					name="clevprca[builder_init_delay_ms]"
 					value="<?php echo esc_attr( $builder_init_delay_ms ); ?>"
 				/>
 				<p class="description"><?php esc_html_e( 'Useful when the builder renders widgets asynchronously after page load.', 'clevers-product-carousel' ); ?></p>
 			</div>
-			<label class="clv-inline-check">
-				<input type="checkbox" name="clv[builder_disable_center_mode]" <?php checked( $builder_disable_center ); ?> />
+			<label class="clevprca-inline-check">
+				<input type="checkbox" name="clevprca[builder_disable_center_mode]" <?php checked( $builder_disable_center ); ?> />
 				<?php esc_html_e( 'Disable center mode in builders (helps with some editor layouts)', 'clevers-product-carousel' ); ?>
 			</label>
 		</div>
@@ -478,166 +470,44 @@ class Clevers_Product_Carousel_Admin {
 
 		<h3><?php esc_html_e( 'Colors', 'clevers-product-carousel' ); ?></h3>
 
-		<div class="clv-field"><label><?php esc_html_e( 'Primary', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[color_primary]" value="<?php echo esc_attr( $color_primary ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Primary', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[color_primary]" value="<?php echo esc_attr( $color_primary ); ?>">
 		</div>
-		<div class="clv-field"><label><?php esc_html_e( 'Primary (Hover)', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[color_primary2]" value="<?php echo esc_attr( $color_primary2 ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Primary (Hover)', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[color_primary2]" value="<?php echo esc_attr( $color_primary2 ); ?>">
 		</div>
-		<div class="clv-field"><label><?php esc_html_e( 'Secondary', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[color_secondary]" value="<?php echo esc_attr( $color_secondary ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Secondary', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[color_secondary]" value="<?php echo esc_attr( $color_secondary ); ?>">
 		</div>
-		<div class="clv-field"><label><?php esc_html_e( 'Accent', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[color_accent]" value="<?php echo esc_attr( $color_accent ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Accent', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[color_accent]" value="<?php echo esc_attr( $color_accent ); ?>">
 		</div>
-		<div class="clv-field"><label><?php esc_html_e( 'Bubble Background', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[bubble_background]" value="<?php echo esc_attr( $bubble_background ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Bubble Background', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[bubble_background]" value="<?php echo esc_attr( $bubble_background ); ?>">
 		</div>
-		<div class="clv-field"><label><?php esc_html_e( 'Bubble Text', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[bubble_text]" value="<?php echo esc_attr( $bubble_text ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Bubble Text', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[bubble_text]" value="<?php echo esc_attr( $bubble_text ); ?>">
 		</div>
-		<div class="clv-field"><label><?php esc_html_e( 'Button Background', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[button_background]" value="<?php echo esc_attr( $button_background ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Button Background', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[button_background]" value="<?php echo esc_attr( $button_background ); ?>">
 		</div>
-		<div class="clv-field">
+		<div class="clevprca-field">
 			<label><?php esc_html_e( 'Button Text', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[button_text]" value="<?php echo esc_attr( $button_text_color_value ); ?>">
-			<label class="clv-inline-check" style="margin-top:6px;">
-				<input type="checkbox" name="clv[button_text_transparent]" <?php checked( 'transparent', $button_text ); ?> />
+			<input type="color" name="clevprca[button_text]" value="<?php echo esc_attr( $button_text_color_value ); ?>">
+			<label class="clevprca-inline-check" style="margin-top:6px;">
+				<input type="checkbox" name="clevprca[button_text_transparent]" <?php checked( 'transparent', $button_text ); ?> />
 				<?php esc_html_e( 'Transparent', 'clevers-product-carousel' ); ?>
 			</label>
 		</div>
-		<div class="clv-field"><label><?php esc_html_e( 'Text', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[color_text]" value="<?php echo esc_attr( $color_text ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Text', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[color_text]" value="<?php echo esc_attr( $color_text ); ?>">
 		</div>
-		<div class="clv-field"><label><?php esc_html_e( 'Card Background', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[color_card_bg]" value="<?php echo esc_attr( $color_card_bg ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Card Background', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[color_card_bg]" value="<?php echo esc_attr( $color_card_bg ); ?>">
 		</div>
-		<div class="clv-field"><label><?php esc_html_e( 'Border', 'clevers-product-carousel' ); ?></label>
-			<input type="color" name="clv[color_border]" value="<?php echo esc_attr( $color_border ); ?>">
+		<div class="clevprca-field"><label><?php esc_html_e( 'Border', 'clevers-product-carousel' ); ?></label>
+			<input type="color" name="clevprca[color_border]" value="<?php echo esc_attr( $color_border ); ?>">
 		</div>
-
-		<script>
-			(function() {
-				var presetSelect = document.getElementById('clv-preset-select');
-				var productPicker = document.getElementById('clv-product-picker');
-				if (!presetSelect) {
-					return;
-				}
-				function syncPreview() {
-					var preset = String(presetSelect.value || '1');
-					var inlinePreview = document.getElementById('clv-preset-preview-inline');
-					var sidePreview = document.getElementById('clv-preset-preview-side');
-					if (inlinePreview) inlinePreview.setAttribute('data-preset', preset);
-					if (sidePreview) sidePreview.setAttribute('data-preset', preset);
-				}
-				presetSelect.addEventListener('change', syncPreview);
-				syncPreview();
-
-				if (!productPicker) {
-					return;
-				}
-
-				var searchInput = document.getElementById('clv-product-search');
-				var resultsBox = document.getElementById('clv-product-search-results');
-				var selectedBox = document.getElementById('clv-selected-products');
-				var csvField = document.getElementById('clv-manual-product-ids-csv');
-				var nonce = productPicker.getAttribute('data-nonce');
-				var selected = [];
-				var debounceTimer = null;
-
-				function syncCsv() {
-					if (csvField) csvField.value = selected.join(', ');
-				}
-
-				function renderSelected() {
-					if (!selectedBox) return;
-					selectedBox.innerHTML = '';
-					selected.forEach(function(id) {
-						var chip = document.createElement('span');
-						chip.className = 'clv-chip';
-						chip.innerHTML = '<span>#' + id + '</span>';
-						var remove = document.createElement('button');
-						remove.type = 'button';
-						remove.setAttribute('aria-label', 'Remove #' + id);
-						remove.textContent = '×';
-						remove.addEventListener('click', function() {
-							selected = selected.filter(function(v) { return v !== id; });
-							renderSelected();
-							syncCsv();
-						});
-						chip.appendChild(remove);
-						selectedBox.appendChild(chip);
-					});
-				}
-
-				function addSelected(id) {
-					id = parseInt(id, 10);
-					if (!id || selected.indexOf(id) !== -1) return;
-					selected.push(id);
-					renderSelected();
-					syncCsv();
-				}
-
-				if (csvField && csvField.value.trim()) {
-					csvField.value.split(',').forEach(function(v) {
-						var id = parseInt(v.trim(), 10);
-						if (id) addSelected(id);
-					});
-				}
-
-				function renderResults(items) {
-					if (!resultsBox) return;
-					resultsBox.innerHTML = '';
-					if (!items.length) {
-						resultsBox.hidden = true;
-						return;
-					}
-					items.forEach(function(item) {
-						var btn = document.createElement('button');
-						btn.type = 'button';
-						btn.textContent = item.label + ' (#' + item.id + ')';
-						btn.addEventListener('click', function() {
-							addSelected(item.id);
-							searchInput.value = '';
-							resultsBox.hidden = true;
-							resultsBox.innerHTML = '';
-						});
-						resultsBox.appendChild(btn);
-					});
-					resultsBox.hidden = false;
-				}
-
-				function searchProducts(term) {
-					if (!term || term.length < 2) {
-						renderResults([]);
-						return;
-					}
-					var url = ajaxurl + '?action=clv_search_products&_ajax_nonce=' + encodeURIComponent(nonce) + '&q=' + encodeURIComponent(term);
-					fetch(url, { credentials: 'same-origin' })
-						.then(function(r) { return r.json(); })
-						.then(function(json) {
-							if (!json || !json.success || !Array.isArray(json.data)) {
-								renderResults([]);
-								return;
-							}
-							renderResults(json.data);
-						})
-						.catch(function() { renderResults([]); });
-				}
-
-				if (searchInput) {
-					searchInput.addEventListener('input', function() {
-						var term = searchInput.value.trim();
-						window.clearTimeout(debounceTimer);
-						debounceTimer = window.setTimeout(function() {
-							searchProducts(term);
-						}, 220);
-					});
-				}
-				renderSelected();
-			})();
-		</script>
 		<?php
 	}
 
@@ -650,17 +520,17 @@ class Clevers_Product_Carousel_Admin {
 			return;
 		}
 
-		if ( $post->post_type !== CLV_SLUG ) {
+		if ( $post->post_type !== CLEVPRCA_SLUG ) {
 			return;
 		}
 
-		$nonce = filter_input( INPUT_POST, 'clv_carousel_nonce', FILTER_DEFAULT );
+		$nonce = filter_input( INPUT_POST, 'cleverspr_carousel_nonce', FILTER_DEFAULT );
 		if ( empty( $nonce ) ) {
 			return;
 		}
 
 		$nonce = sanitize_text_field( wp_unslash( $nonce ) );
-		if ( ! wp_verify_nonce( $nonce, 'clv_save_carousel' ) ) {
+		if ( ! wp_verify_nonce( $nonce, 'clevprca_save_carousel' ) ) {
 			return;
 		}
 
@@ -668,16 +538,17 @@ class Clevers_Product_Carousel_Admin {
 			return;
 		}
 
-		$import_requested = isset( $_POST['clv_apply_import_json'] );
+		$import_requested = isset( $_POST['clevprca_apply_import_json'] );
 		if ( $import_requested ) {
-			$raw      = isset( $_POST['clv_import_json'] ) ? wp_unslash( $_POST['clv_import_json'] ) : '';
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON payload: decoded + structurally validated in extract_import_settings_from_raw() / normalize_imported_settings(). wp_unslash() strips slashes added by WP magic quotes.
+			$raw      = isset( $_POST['clevprca_import_json'] ) ? wp_unslash( $_POST['clevprca_import_json'] ) : '';
 			$settings = $this->extract_import_settings_from_raw( $raw );
 
 			if ( is_array( $settings ) ) {
 				$normalized = $this->normalize_imported_settings( $settings );
-				update_post_meta( $post_id, '_clv_settings', $normalized );
-				$ver = (int) get_post_meta( $post_id, '_clv_cache_version', true );
-				update_post_meta( $post_id, '_clv_cache_version', $ver + 1 );
+				update_post_meta( $post_id, '_clevprca_settings', $normalized );
+				$ver = (int) get_post_meta( $post_id, '_clevprca_cache_version', true );
+				update_post_meta( $post_id, '_clevprca_cache_version', $ver + 1 );
 				$this->append_notice_to_redirect( 'imported' );
 			} elseif ( '' === trim( (string) $raw ) ) {
 				$this->append_notice_to_redirect( 'import_empty' );
@@ -688,7 +559,7 @@ class Clevers_Product_Carousel_Admin {
 			return;
 		}
 
-		$in = filter_input( INPUT_POST, 'clv', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
+		$in = filter_input( INPUT_POST, 'clevprca', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY );
 		if ( ! is_array( $in ) ) {
 			$in = array();
 		}
@@ -743,10 +614,10 @@ class Clevers_Product_Carousel_Admin {
 			$out['button_text'] = 'transparent';
 		}
 
-		update_post_meta( $post_id, '_clv_settings', $out );
+		update_post_meta( $post_id, '_clevprca_settings', $out );
 
-		$ver = (int) get_post_meta( $post_id, '_clv_cache_version', true );
-		update_post_meta( $post_id, '_clv_cache_version', $ver + 1 );
+		$ver = (int) get_post_meta( $post_id, '_clevprca_cache_version', true );
+		update_post_meta( $post_id, '_clevprca_cache_version', $ver + 1 );
 	}
 
 	private function get_orderby_options() {
@@ -821,16 +692,16 @@ class Clevers_Product_Carousel_Admin {
 	}
 
 	public function add_row_actions( $actions, $post ) {
-		if ( ! ( $post instanceof WP_Post ) || CLV_SLUG !== $post->post_type ) {
+		if ( ! ( $post instanceof WP_Post ) || CLEVPRCA_SLUG !== $post->post_type ) {
 			return $actions;
 		}
 
-		$actions['clv_duplicate'] = sprintf(
+		$actions['clevprca_duplicate'] = sprintf(
 			'<a href="%s">%s</a>',
 			esc_url( $this->get_duplicate_url( $post->ID ) ),
 			esc_html__( 'Duplicate', 'clevers-product-carousel' )
 		);
-		$actions['clv_export'] = sprintf(
+		$actions['clevprca_export'] = sprintf(
 			'<a href="%s">%s</a>',
 			esc_url( $this->get_export_url( $post->ID ) ),
 			esc_html__( 'Export JSON', 'clevers-product-carousel' )
@@ -843,7 +714,7 @@ class Clevers_Product_Carousel_Admin {
 		$post_id = isset( $_GET['post_id'] ) ? (int) $_GET['post_id'] : 0;
 		$nonce   = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
 
-		if ( ! $post_id || ! wp_verify_nonce( $nonce, 'clv_duplicate_carousel_' . $post_id ) ) {
+		if ( ! $post_id || ! wp_verify_nonce( $nonce, 'clevprca_duplicate_carousel_' . $post_id ) ) {
 			wp_die( esc_html__( 'Invalid duplicate request.', 'clevers-product-carousel' ) );
 		}
 
@@ -852,13 +723,13 @@ class Clevers_Product_Carousel_Admin {
 		}
 
 		$post = get_post( $post_id );
-		if ( ! $post || CLV_SLUG !== $post->post_type ) {
+		if ( ! $post || CLEVPRCA_SLUG !== $post->post_type ) {
 			wp_die( esc_html__( 'Carousel not found.', 'clevers-product-carousel' ) );
 		}
 
 		$new_id = wp_insert_post(
 			array(
-				'post_type'   => CLV_SLUG,
+				'post_type'   => CLEVPRCA_SLUG,
 				'post_status' => 'draft',
 				'post_title'  => sprintf(
 					/* translators: %s original title */
@@ -873,16 +744,16 @@ class Clevers_Product_Carousel_Admin {
 			$this->redirect_with_notice( $post_id, 'duplicate_error' );
 		}
 
-		$settings = clevers_product_carousel_get_carousel_meta( $post_id );
-		update_post_meta( $new_id, '_clv_settings', $settings );
-		update_post_meta( $new_id, '_clv_cache_version', 0 );
+		$settings = clevprca_get_carousel_meta( $post_id );
+		update_post_meta( $new_id, '_clevprca_settings', $settings );
+		update_post_meta( $new_id, '_clevprca_cache_version', 0 );
 
 		wp_safe_redirect(
 			add_query_arg(
 				array(
 					'post'   => (int) $new_id,
 					'action' => 'edit',
-					'clv_notice' => 'duplicated',
+					'clevprca_notice' => 'duplicated',
 				),
 				admin_url( 'post.php' )
 			)
@@ -894,7 +765,7 @@ class Clevers_Product_Carousel_Admin {
 		$post_id = isset( $_GET['post_id'] ) ? (int) $_GET['post_id'] : 0;
 		$nonce   = isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
 
-		if ( ! $post_id || ! wp_verify_nonce( $nonce, 'clv_export_carousel_json_' . $post_id ) ) {
+		if ( ! $post_id || ! wp_verify_nonce( $nonce, 'clevprca_export_carousel_json_' . $post_id ) ) {
 			wp_die( esc_html__( 'Invalid export request.', 'clevers-product-carousel' ) );
 		}
 
@@ -903,7 +774,7 @@ class Clevers_Product_Carousel_Admin {
 		}
 
 		$post = get_post( $post_id );
-		if ( ! $post || CLV_SLUG !== $post->post_type ) {
+		if ( ! $post || CLEVPRCA_SLUG !== $post->post_type ) {
 			wp_die( esc_html__( 'Carousel not found.', 'clevers-product-carousel' ) );
 		}
 
@@ -913,13 +784,13 @@ class Clevers_Product_Carousel_Admin {
 			'exported'  => gmdate( 'c' ),
 			'carousel'  => array(
 				'title'    => $post->post_title,
-				'settings' => clevers_product_carousel_get_carousel_meta( $post_id ),
+				'settings' => clevprca_get_carousel_meta( $post_id ),
 			),
 		);
 
 		nocache_headers();
 		header( 'Content-Type: application/json; charset=' . get_option( 'blog_charset' ) );
-		header( 'Content-Disposition: attachment; filename=clevers-carousel-' . (int) $post_id . '.json' );
+		header( 'Content-Disposition: attachment; filename=clevprca-carousel-' . (int) $post_id . '.json' );
 		echo wp_json_encode( $payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 		exit;
 	}
@@ -931,18 +802,19 @@ class Clevers_Product_Carousel_Admin {
 			wp_die( esc_html__( 'Missing carousel ID.', 'clevers-product-carousel' ) );
 		}
 
-		check_admin_referer( 'clv_import_carousel_json_' . $post_id );
+		check_admin_referer( 'clevprca_import_carousel_json_' . $post_id );
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			wp_die( esc_html__( 'You do not have permission to import settings into this carousel.', 'clevers-product-carousel' ) );
 		}
 
 		$post = get_post( $post_id );
-		if ( ! $post || CLV_SLUG !== $post->post_type ) {
+		if ( ! $post || CLEVPRCA_SLUG !== $post->post_type ) {
 			wp_die( esc_html__( 'Carousel not found.', 'clevers-product-carousel' ) );
 		}
 
-		$raw = isset( $_POST['clv_import_json'] ) ? wp_unslash( $_POST['clv_import_json'] ) : '';
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- JSON payload: decoded + structurally validated in extract_import_settings_from_raw() / normalize_imported_settings(). wp_unslash() strips slashes added by WP magic quotes.
+		$raw = isset( $_POST['clevprca_import_json'] ) ? wp_unslash( $_POST['clevprca_import_json'] ) : '';
 		$raw = trim( (string) $raw );
 		if ( '' === $raw ) {
 			$this->redirect_with_notice( $post_id, 'import_empty' );
@@ -954,9 +826,9 @@ class Clevers_Product_Carousel_Admin {
 		}
 
 		$normalized = $this->normalize_imported_settings( $settings );
-		update_post_meta( $post_id, '_clv_settings', $normalized );
-		$ver = (int) get_post_meta( $post_id, '_clv_cache_version', true );
-		update_post_meta( $post_id, '_clv_cache_version', $ver + 1 );
+		update_post_meta( $post_id, '_clevprca_settings', $normalized );
+		$ver = (int) get_post_meta( $post_id, '_clevprca_cache_version', true );
+		update_post_meta( $post_id, '_clevprca_cache_version', $ver + 1 );
 
 		$this->redirect_with_notice( $post_id, 'imported' );
 	}
@@ -967,11 +839,12 @@ class Clevers_Product_Carousel_Admin {
 		}
 
 		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( ! $screen || CLV_SLUG !== $screen->post_type ) {
+		if ( ! $screen || CLEVPRCA_SLUG !== $screen->post_type ) {
 			return;
 		}
 
-		$notice = isset( $_GET['clv_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['clv_notice'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin notice from redirect query arg; value is whitelisted against $map before rendering, never persisted or echoed raw. Nonce was verified at the originating handler.
+		$notice = isset( $_GET['clevprca_notice'] ) ? sanitize_text_field( wp_unslash( $_GET['clevprca_notice'] ) ) : '';
 		if ( '' === $notice ) {
 			return;
 		}
@@ -997,7 +870,7 @@ class Clevers_Product_Carousel_Admin {
 	}
 
 	public function ajax_search_products() {
-		check_ajax_referer( 'clv_search_products' );
+		check_ajax_referer( 'clevprca_search_products' );
 
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			wp_send_json_error( array( 'message' => 'forbidden' ), 403 );
@@ -1039,12 +912,12 @@ class Clevers_Product_Carousel_Admin {
 		return wp_nonce_url(
 			add_query_arg(
 				array(
-					'action'  => 'clv_duplicate_carousel',
+					'action'  => 'clevprca_duplicate_carousel',
 					'post_id' => (int) $post_id,
 				),
 				admin_url( 'admin.php' )
 			),
-			'clv_duplicate_carousel_' . (int) $post_id
+			'clevprca_duplicate_carousel_' . (int) $post_id
 		);
 	}
 
@@ -1052,12 +925,12 @@ class Clevers_Product_Carousel_Admin {
 		return wp_nonce_url(
 			add_query_arg(
 				array(
-					'action'  => 'clv_export_carousel_json',
+					'action'  => 'clevprca_export_carousel_json',
 					'post_id' => (int) $post_id,
 				),
 				admin_url( 'admin.php' )
 			),
-			'clv_export_carousel_json_' . (int) $post_id
+			'clevprca_export_carousel_json_' . (int) $post_id
 		);
 	}
 
@@ -1067,7 +940,7 @@ class Clevers_Product_Carousel_Admin {
 				array(
 					'post'       => (int) $post_id,
 					'action'     => 'edit',
-					'clv_notice' => sanitize_key( $notice ),
+					'clevprca_notice' => sanitize_key( $notice ),
 				),
 				admin_url( 'post.php' )
 			)
@@ -1116,7 +989,7 @@ class Clevers_Product_Carousel_Admin {
 		add_filter(
 			'redirect_post_location',
 			static function ( $location ) use ( $notice ) {
-				return add_query_arg( 'clv_notice', sanitize_key( $notice ), $location );
+				return add_query_arg( 'clevprca_notice', sanitize_key( $notice ), $location );
 			}
 		);
 	}

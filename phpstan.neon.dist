@@ -5,6 +5,7 @@ parameters:
     - includes
   bootstrapFiles:
     - tests/bootstrap.php
+    - tests/phpstan-stubs.php
   excludePaths:
     - */includes/class-admin.php
     - */includes/class-cpt.php

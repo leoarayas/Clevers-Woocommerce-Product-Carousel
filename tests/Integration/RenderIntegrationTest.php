@@ -18,14 +18,14 @@ final class RenderIntegrationTest extends TestCase {
 		$original = class_exists( 'WooCommerce' ) ? true : false;
 		if ( $original ) {
 			// Can't unload class, but we can test with invalid carousel ID.
-			$renderer = new Clevers_Product_Carousel_Render();
+			$renderer = new CLEVPRCA_Render();
 			$html     = $renderer->render_carousel( 0 );
 			$this->assertSame( '', $html );
 		}
 	}
 
 	public function test_render_returns_empty_string_for_invalid_carousel_id(): void {
-		$renderer = new Clevers_Product_Carousel_Render();
+		$renderer = new CLEVPRCA_Render();
 		$html     = $renderer->render_carousel( 999 );
 		$this->assertSame( '', $html );
 	}
@@ -35,22 +35,22 @@ final class RenderIntegrationTest extends TestCase {
 		$post->post_type  = 'page';
 		$GLOBALS['mock_state']['posts'][10] = $post;
 
-		$renderer = new Clevers_Product_Carousel_Render();
+		$renderer = new CLEVPRCA_Render();
 		$html     = $renderer->render_carousel( 10 );
 		$this->assertSame( '', $html );
 	}
 
 	public function test_render_uses_cached_html_when_available(): void {
 		$post             = new WP_Post();
-		$post->post_type  = CLV_SLUG;
+		$post->post_type  = CLEVPRCA_SLUG;
 		$GLOBALS['mock_state']['posts'][20]     = $post;
 		$GLOBALS['mock_state']['post_meta'][20] = array();
-		$args = clevers_product_carousel_build_query_args( 20 );
-		$settings = clevers_product_carousel_get_settings( 20 );
-		$cache_key = 'clv_carousel_20_v0_g0_' . md5( wp_json_encode( $args ) . '|' . wp_json_encode( $settings ) );
+		$args = clevprca_build_query_args( 20 );
+		$settings = clevprca_get_settings( 20 );
+		$cache_key = 'cleverspr_carousel_20_v0_g0_' . md5( wp_json_encode( $args ) . '|' . wp_json_encode( $settings ) );
 		$GLOBALS['mock_state']['transients'][ $cache_key ] = '<div>cached</div>';
 
-		$renderer = new Clevers_Product_Carousel_Render();
+		$renderer = new CLEVPRCA_Render();
 		$html     = $renderer->render_carousel( 20 );
 
 		$this->assertSame( '<div>cached</div>', $html );
@@ -60,7 +60,7 @@ final class RenderIntegrationTest extends TestCase {
 	public function test_settings_defaults_applied_correctly(): void {
 		$GLOBALS['mock_state']['post_meta'][30] = array();
 
-		$settings = clevers_product_carousel_get_settings( 30 );
+		$settings = clevprca_get_settings( 30 );
 
 		$this->assertSame( 1, $settings['preset'] );
 		$this->assertSame( 4, $settings['slidesToShow'] );
@@ -84,7 +84,7 @@ final class RenderIntegrationTest extends TestCase {
 			'autoplayMs'         => 100,
 		);
 
-		$settings = clevers_product_carousel_get_settings( 31 );
+		$settings = clevprca_get_settings( 31 );
 
 		$this->assertSame( 4, $settings['preset'] );           // max 4
 		$this->assertSame( 8, $settings['slidesToShow'] );     // max 8
@@ -100,7 +100,7 @@ final class RenderIntegrationTest extends TestCase {
 		);
 		$GLOBALS['mock_state']['product_ids_on_sale'] = array( 1, 2, 3 );
 
-		$args = clevers_product_carousel_build_query_args( 40 );
+		$args = clevprca_build_query_args( 40 );
 
 		$this->assertArrayHasKey( 'include', $args );
 		$this->assertSame( array( 1, 2, 3 ), $args['include'] );
@@ -113,7 +113,7 @@ final class RenderIntegrationTest extends TestCase {
 		);
 		$GLOBALS['mock_state']['featured_product_ids'] = array( 10, 20 );
 
-		$args = clevers_product_carousel_build_query_args( 41 );
+		$args = clevprca_build_query_args( 41 );
 
 		$this->assertArrayHasKey( 'include', $args );
 		$this->assertSame( array( 10, 20 ), $args['include'] );
@@ -124,7 +124,7 @@ final class RenderIntegrationTest extends TestCase {
 			'categories' => array( 'electronics', 'gadgets' ),
 		);
 
-		$args = clevers_product_carousel_build_query_args( 42 );
+		$args = clevprca_build_query_args( 42 );
 
 		$this->assertArrayHasKey( 'category', $args );
 		$this->assertSame( array( 'electronics', 'gadgets' ), $args['category'] );
@@ -135,7 +135,7 @@ final class RenderIntegrationTest extends TestCase {
 			'instock_only' => true,
 		);
 
-		$args = clevers_product_carousel_build_query_args( 43 );
+		$args = clevprca_build_query_args( 43 );
 
 		$this->assertArrayHasKey( 'stock_status', $args );
 		$this->assertSame( 'instock', $args['stock_status'] );
@@ -147,7 +147,7 @@ final class RenderIntegrationTest extends TestCase {
 			'manual_product_ids'      => array( 5, 10, 15 ),
 		);
 
-		$args = clevers_product_carousel_build_query_args( 44 );
+		$args = clevprca_build_query_args( 44 );
 
 		$this->assertArrayHasKey( 'include', $args );
 		$this->assertSame( array( 5, 10, 15 ), $args['include'] );
@@ -159,7 +159,7 @@ final class RenderIntegrationTest extends TestCase {
 			'orderby' => 'invalid_value',
 		);
 
-		$args = clevers_product_carousel_build_query_args( 45 );
+		$args = clevprca_build_query_args( 45 );
 
 		$this->assertSame( 'date', $args['orderby'] );
 	}
@@ -169,13 +169,13 @@ final class RenderIntegrationTest extends TestCase {
 			'order' => 'asc',
 		);
 
-		$args = clevers_product_carousel_build_query_args( 46 );
+		$args = clevprca_build_query_args( 46 );
 
 		$this->assertSame( 'ASC', $args['order'] );
 	}
 
 	public function test_queue_metrics_defaults(): void {
-		$metrics = clevers_product_carousel_get_queue_metrics( 50 );
+		$metrics = clevprca_get_queue_metrics( 50 );
 
 		$this->assertSame( 0, $metrics['pending'] );
 		$this->assertSame( 0, $metrics['processed'] );
@@ -186,9 +186,9 @@ final class RenderIntegrationTest extends TestCase {
 	}
 
 	public function test_queue_metrics_update_and_retrieval(): void {
-		clevers_product_carousel_update_queue_metrics( 51, 10, 8, 2, 45.5, 'timeout' );
+		clevprca_update_queue_metrics( 51, 10, 8, 2, 45.5, 'timeout' );
 
-		$metrics = clevers_product_carousel_get_queue_metrics( 51 );
+		$metrics = clevprca_get_queue_metrics( 51 );
 
 		$this->assertSame( 10, $metrics['pending'] );
 		$this->assertSame( 8, $metrics['processed'] );
@@ -199,7 +199,7 @@ final class RenderIntegrationTest extends TestCase {
 	}
 
 	public function test_merge_product_ids_intersection_strategy(): void {
-		$result = clevers_product_carousel_merge_product_ids(
+		$result = clevprca_merge_product_ids(
 			array( 1, 2, 3, 4 ),
 			array( 2, 3, 5 ),
 			'intersection'
@@ -209,7 +209,7 @@ final class RenderIntegrationTest extends TestCase {
 	}
 
 	public function test_merge_product_ids_union_strategy(): void {
-		$result = clevers_product_carousel_merge_product_ids(
+		$result = clevprca_merge_product_ids(
 			array( 1, 2, 3 ),
 			array( 3, 4, 5 ),
 			'union'
@@ -219,7 +219,7 @@ final class RenderIntegrationTest extends TestCase {
 	}
 
 	public function test_merge_product_ids_null_current_returns_incoming(): void {
-		$result = clevers_product_carousel_merge_product_ids(
+		$result = clevprca_merge_product_ids(
 			null,
 			array( 10, 20 ),
 			'intersection'
@@ -229,18 +229,18 @@ final class RenderIntegrationTest extends TestCase {
 	}
 
 	public function test_sanitize_css_value_valid_hex(): void {
-		$this->assertSame( '#ff0000', clevers_product_carousel_sanitize_css_value( '#ff0000' ) );
-		$this->assertSame( '#abc', clevers_product_carousel_sanitize_css_value( '#abc' ) );
+		$this->assertSame( '#ff0000', clevprca_sanitize_css_value( '#ff0000' ) );
+		$this->assertSame( '#abc', clevprca_sanitize_css_value( '#abc' ) );
 	}
 
 	public function test_sanitize_css_value_transparent(): void {
-		$this->assertSame( 'transparent', clevers_product_carousel_sanitize_css_value( 'transparent' ) );
-		$this->assertSame( 'transparent', clevers_product_carousel_sanitize_css_value( '  TRANSPARENT  ' ) );
+		$this->assertSame( 'transparent', clevprca_sanitize_css_value( 'transparent' ) );
+		$this->assertSame( 'transparent', clevprca_sanitize_css_value( '  TRANSPARENT  ' ) );
 	}
 
 	public function test_sanitize_css_value_invalid_returns_empty(): void {
-		$this->assertSame( '', clevers_product_carousel_sanitize_css_value( 'not-a-color' ) );
-		$this->assertSame( '', clevers_product_carousel_sanitize_css_value( '' ) );
+		$this->assertSame( '', clevprca_sanitize_css_value( 'not-a-color' ) );
+		$this->assertSame( '', clevprca_sanitize_css_value( '' ) );
 	}
 
 	public function test_slider_data_attributes_contain_expected_keys(): void {
@@ -257,7 +257,7 @@ final class RenderIntegrationTest extends TestCase {
 			'reducedMotionAutoplayOff' => false,
 		);
 
-		$html = clevers_product_carousel_get_slider_data_attributes( 60, $settings );
+		$html = clevprca_get_slider_data_attributes( 60, $settings );
 
 		$this->assertStringContainsString( 'data-carousel-id="60"', $html );
 		$this->assertStringContainsString( 'data-slides="3"', $html );
@@ -276,7 +276,7 @@ final class RenderIntegrationTest extends TestCase {
 		$product = $this->createMock( WC_Product::class );
 		$product->method( 'is_on_sale' )->willReturn( false );
 
-		$result = clevers_product_carousel_get_discount_percentage( $product );
+		$result = clevprca_get_discount_percentage( $product );
 
 		$this->assertNull( $result );
 	}

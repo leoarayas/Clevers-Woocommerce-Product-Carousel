@@ -15,7 +15,7 @@ final class QueryBuilderTest extends TestCase {
 			'categories' => array( ' Summer Sale ', 'new_arrivals' ),
 		);
 
-		$args = clevers_product_carousel_build_query_args( 10 );
+		$args = clevprca_build_query_args( 10 );
 
 		$this->assertSame( 'date', $args['orderby'] );
 		$this->assertSame( 'DESC', $args['order'] );
@@ -30,7 +30,7 @@ final class QueryBuilderTest extends TestCase {
 			'orderby'                 => 'rating',
 		);
 
-		$args = clevers_product_carousel_build_query_args( 11 );
+		$args = clevprca_build_query_args( 11 );
 
 		$this->assertSame( array( 3, 7 ), $args['include'] );
 		$this->assertSame( 'include', $args['orderby'] );
@@ -45,13 +45,13 @@ final class QueryBuilderTest extends TestCase {
 		$GLOBALS['mock_state']['featured_product_ids'] = array( 2, 5 );
 
 		add_filter(
-			'clevers_carousel/include_strategy',
+			'cleverspr_carousel/include_strategy',
 			static function () {
 				return 'union';
 			}
 		);
 
-		$args = clevers_product_carousel_build_query_args( 12 );
+		$args = clevprca_build_query_args( 12 );
 
 		$this->assertSame( array( 1, 2, 5 ), $args['include'] );
 	}
