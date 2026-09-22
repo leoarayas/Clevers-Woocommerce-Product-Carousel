@@ -20,17 +20,6 @@ class WP_Query {
 	}
 }
 
-class WP_Post {
-	/** @var int */
-	public $ID = 0;
-
-	/** @var string */
-	public $post_title = '';
-
-	/** @var string */
-	public $post_status = '';
-}
-
 class WP_CLI {
 	public static function success( string $message ): void {}
 

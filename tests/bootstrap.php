@@ -47,6 +47,9 @@ function reset_mock_state() {
 }
 
 class WP_Post {
+	public $ID = 0;
+	public $post_title = '';
+	public $post_status = '';
 	public $post_content = '';
 	public $post_type = '';
 }
