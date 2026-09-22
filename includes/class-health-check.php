@@ -4,8 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Clevers_Product_Carousel_Health_Check {
-	const RESULT_TRANSIENT = 'clv_activation_health_check';
+class CLEVPRCA_Health_Check {
+	const RESULT_TRANSIENT = 'clevprca_activation_health_check';
 
 	/**
 	 * Build a compatibility matrix with actionable diagnostics.

@@ -4,7 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class Clevers_Product_Carousel_CPT {
+class CLEVPRCA_CPT {
 
 	public function init() {
 		add_action( 'init', array( $this, 'register_cpt_and_assets' ) );
@@ -13,7 +13,7 @@ class Clevers_Product_Carousel_CPT {
 	}
 
 	public function force_classic_editor_for_carousel_cpt( $use_block_editor, $post_type ) {
-		if ( CLV_SLUG === $post_type ) {
+		if ( CLEVPRCA_SLUG === $post_type ) {
 			return false;
 		}
 
@@ -22,7 +22,7 @@ class Clevers_Product_Carousel_CPT {
 
 	public function add_image_sizes() {
 		add_image_size(
-			'clevers_carousel_thumb',
+			'cleverspr_carousel_thumb',
 			330,
 			400,
 			true // hard crop
@@ -32,54 +32,55 @@ class Clevers_Product_Carousel_CPT {
 	public function register_cpt_and_assets() {
 		// Slick desde el propio plugin (no CDN).
 		wp_register_style(
-			'clv-slick',
-			CLV_URL . 'assets/vendor/slick/slick.css',
+			'clevprca-slick',
+			CLEVPRCA_URL . 'assets/vendor/slick/slick.css',
 			array(),
 			'1.8.1'
 		);
 
 		wp_register_style(
-			'clv-slick-theme',
-			CLV_URL . 'assets/vendor/slick/slick-theme.css',
-			array( 'clv-slick' ),
+			'clevprca-slick-theme',
+			CLEVPRCA_URL . 'assets/vendor/slick/slick-theme.css',
+			array( 'clevprca-slick' ),
 			'1.8.1'
 		);
 
 		wp_register_script(
-			'clv-slick',
-			CLV_URL . 'assets/vendor/slick/slick.min.js',
+			'clevprca-slick',
+			CLEVPRCA_URL . 'assets/vendor/slick/slick.min.js',
 			array( 'jquery' ),
 			'1.8.1',
 			true
 		);
 
 		// Tus assets locales con busting por filemtime.
-		$css     = CLV_DIR . 'assets/carousel.css';
-		$js      = CLV_DIR . 'assets/carousel.js';
+		$css     = CLEVPRCA_DIR . 'assets/carousel.css';
+		$js      = CLEVPRCA_DIR . 'assets/carousel.js';
 		$css_ver = file_exists( $css ) ? filemtime( $css ) : '0.1.0';
 		$js_ver  = file_exists( $js ) ? filemtime( $js ) : '0.1.0';
 
 		wp_register_style(
-			'clv-carousel',
-			CLV_URL . 'assets/carousel.css',
-			array( 'clv-slick', 'clv-slick-theme' ),
+			'clevprca-carousel',
+			CLEVPRCA_URL . 'assets/carousel.css',
+			array( 'clevprca-slick', 'clevprca-slick-theme' ),
 			$css_ver
 		);
 
 		wp_register_script(
-			'clv-carousel',
-			CLV_URL . 'assets/carousel.js',
-			array( 'clv-slick' ),
+			'clevprca-carousel',
+			CLEVPRCA_URL . 'assets/carousel.js',
+			array( 'clevprca-slick' ),
 			$js_ver,
 			true
 		);
 
 		wp_localize_script(
-			'clv-carousel',
-			'clvCarouselI18n',
+			'clevprca-carousel',
+			'clevprcaCarouselI18n',
 			array(
 				'prevSlide' => __( 'Previous slide', 'clevers-product-carousel' ),
 				'nextSlide' => __( 'Next slide', 'clevers-product-carousel' ),
+				/* translators: %d: slide number. */
 				'goToSlide' => __( 'Go to slide %d', 'clevers-product-carousel' ),
 				'carousel'  => __( 'Product carousel', 'clevers-product-carousel' ),
 			)
@@ -108,6 +109,6 @@ class Clevers_Product_Carousel_CPT {
 			'map_meta_cap'    => true,
 		);
 
-		register_post_type( CLV_SLUG, $args );
+		register_post_type( CLEVPRCA_SLUG, $args );
 	}
 }

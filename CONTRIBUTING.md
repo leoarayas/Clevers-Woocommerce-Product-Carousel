@@ -52,7 +52,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) forma
 ## Coding Standards
 
 - Follow [WordPress Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/).
-- Prefix every global function, class, constant, hook, option, and post meta key with `clevers_product_carousel_` or `clv_`.
+- Prefix every global function, class, constant, hook, option, and post meta key with `clevprca_` (functions/options/meta), `CLEVPRCA_` (constants/classes).
 - All strings must use the `clevers-product-carousel` text domain.
 - All output must be escaped (`esc_html`, `esc_attr`, `esc_url`, `wp_kses_post`).
 - All input must be sanitized (`sanitize_text_field`, `absint`, `wp_unslash`).

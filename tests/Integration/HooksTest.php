@@ -20,12 +20,12 @@ final class HooksTest extends TestCase {
 			'limit'   => 8,
 		);
 		$post = new WP_Post();
-		$post->post_type = CLV_SLUG;
+		$post->post_type = CLEVPRCA_SLUG;
 		$GLOBALS['mock_state']['posts'][101] = $post;
 
 		$captured = null;
 		add_filter(
-			'clevers_carousel_query_args',
+			'cleverspr_carousel_query_args',
 			function ( $args, $carousel_id, $meta ) use ( &$captured ) {
 				$captured = array(
 					'args'        => $args,
@@ -39,7 +39,7 @@ final class HooksTest extends TestCase {
 			3
 		);
 
-		$args = clevers_product_carousel_build_query_args( 101 );
+		$args = clevprca_build_query_args( 101 );
 
 		$this->assertIsArray( $captured );
 		$this->assertSame( 101, $captured['carousel_id'] );
@@ -54,7 +54,7 @@ final class HooksTest extends TestCase {
 		$vars_map = array( 'color_primary' => '--clevers-primary' );
 
 		add_filter(
-			'clevers_carousel_css_vars',
+			'cleverspr_carousel_css_vars',
 			function ( $vars, $carousel_id, $settings_passed, $vars_map_passed ) {
 				$vars[] = '--clevers-custom: 12px;';
 				return $vars;
@@ -64,7 +64,7 @@ final class HooksTest extends TestCase {
 		);
 
 		$vars = array( '--clevers-primary:#ff0000;' );
-		$vars = apply_filters( 'clevers_carousel_css_vars', $vars, 7, $settings, $vars_map );
+		$vars = apply_filters( 'cleverspr_carousel_css_vars', $vars, 7, $settings, $vars_map );
 
 		$this->assertContains( '--clevers-primary:#ff0000;', $vars );
 		$this->assertContains( '--clevers-custom: 12px;', $vars );
@@ -73,7 +73,7 @@ final class HooksTest extends TestCase {
 	public function test_template_path_filter_receives_and_can_modify_rel_path(): void {
 		$captured = null;
 		add_filter(
-			'clevers_carousel_template_path',
+			'cleverspr_carousel_template_path',
 			function ( $rel_path ) use ( &$captured ) {
 				$captured = $rel_path;
 				return 'custom/' . $rel_path;
@@ -81,20 +81,20 @@ final class HooksTest extends TestCase {
 			20
 		);
 
-		clevers_product_carousel_locate_template( 'cards/card-1.php' );
+		clevprca_locate_template( 'cards/card-1.php' );
 
 		$this->assertSame( 'cards/card-1.php', $captured );
 	}
 
 	public function test_cache_ttl_filter_overrides_default(): void {
 		$post = new WP_Post();
-		$post->post_type = CLV_SLUG;
+		$post->post_type = CLEVPRCA_SLUG;
 		$GLOBALS['mock_state']['posts'][201] = $post;
 		$GLOBALS['mock_state']['post_meta'][201] = array();
 		$GLOBALS['mock_state']['locate_template_value'] = dirname( __DIR__ ) . '/fixtures/simple-template.php';
 
 		add_filter(
-			'clevers_carousel/cache_ttl',
+			'cleverspr_carousel/cache_ttl',
 			function ( $ttl ) {
 				return 30 * MINUTE_IN_SECONDS;
 			},
@@ -102,7 +102,7 @@ final class HooksTest extends TestCase {
 			4
 		);
 
-		$renderer = new Clevers_Product_Carousel_Render();
+		$renderer = new CLEVPRCA_Render();
 		$renderer->render_carousel( 201 );
 
 		$this->assertNotEmpty( $GLOBALS['mock_state']['set_transients'] );
@@ -112,7 +112,7 @@ final class HooksTest extends TestCase {
 
 	public function test_before_and_after_render_actions_receive_products(): void {
 		$post = new WP_Post();
-		$post->post_type = CLV_SLUG;
+		$post->post_type = CLEVPRCA_SLUG;
 		$GLOBALS['mock_state']['posts'][301] = $post;
 		$GLOBALS['mock_state']['post_meta'][301] = array();
 		$GLOBALS['mock_state']['locate_template_value'] = dirname( __DIR__ ) . '/fixtures/simple-template.php';
@@ -123,7 +123,7 @@ final class HooksTest extends TestCase {
 		$after_called  = false;
 
 		add_action(
-			'clevers_carousel_before_render',
+			'cleverspr_carousel_before_render',
 			function ( $carousel_id, $settings, $products ) use ( &$before_called ) {
 				$before_called = true;
 				$this->assertSame( 301, $carousel_id );
@@ -136,7 +136,7 @@ final class HooksTest extends TestCase {
 		);
 
 		add_action(
-			'clevers_carousel_after_render',
+			'cleverspr_carousel_after_render',
 			function () use ( &$after_called ) {
 				$after_called = true;
 			},
@@ -144,24 +144,24 @@ final class HooksTest extends TestCase {
 			3
 		);
 
-		$renderer = new Clevers_Product_Carousel_Render();
+		$renderer = new CLEVPRCA_Render();
 		$renderer->render_carousel( 301 );
 
-		$this->assertTrue( $before_called, 'clevers_carousel_before_render was not fired' );
-		$this->assertTrue( $after_called, 'clevers_carousel_after_render was not fired' );
+		$this->assertTrue( $before_called, 'cleverspr_carousel_before_render was not fired' );
+		$this->assertTrue( $after_called, 'cleverspr_carousel_after_render was not fired' );
 
 		WC_Product_Query::$products = array();
 	}
 
 	public function test_rendered_html_filter_can_post_process_output(): void {
 		$post = new WP_Post();
-		$post->post_type = CLV_SLUG;
+		$post->post_type = CLEVPRCA_SLUG;
 		$GLOBALS['mock_state']['posts'][401] = $post;
 		$GLOBALS['mock_state']['post_meta'][401] = array();
 		$GLOBALS['mock_state']['locate_template_value'] = dirname( __DIR__ ) . '/fixtures/simple-template.php';
 
 		add_filter(
-			'clevers_carousel/rendered_html',
+			'cleverspr_carousel/rendered_html',
 			function ( $html ) {
 				return $html . '<!-- post-processed -->';
 			},
@@ -169,7 +169,7 @@ final class HooksTest extends TestCase {
 			4
 		);
 
-		$renderer = new Clevers_Product_Carousel_Render();
+		$renderer = new CLEVPRCA_Render();
 		$html     = $renderer->render_carousel( 401 );
 
 		$this->assertStringEndsWith( '<!-- post-processed -->', $html );

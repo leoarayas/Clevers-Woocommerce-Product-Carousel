@@ -45,5 +45,5 @@ Mejorar producto, DX y robustez del plugin en 8 frentes priorizados.
 - [x] Actualizar estructura y ejemplos
 
 ## Notas
-- Mantener compatibilidad con configuraciones existentes (`_clv_settings`).
+- Mantener compatibilidad con configuraciones existentes (`_clevprca_settings`).
 - Priorizar cambios incrementales y seguros sobre refactors grandes.

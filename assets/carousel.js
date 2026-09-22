@@ -27,7 +27,7 @@
   }
 
   function labelSlickControls($el) {
-    var i18n = window.clvCarouselI18n || {};
+    var i18n = window.clevprcaCarouselI18n || {};
 
     $el.find('.slick-prev').attr({
       'aria-label': i18n.prevSlide || 'Previous slide',
@@ -235,11 +235,11 @@
   });
 
   // Expose a manual hook for builders/console debugging.
-  window.CleversProductCarouselInit = function (ctx) {
+  window.ClevprcaProductCarouselInit = function (ctx) {
     initCleversSliders(ctx || document);
   };
 
-  window.CleversProductCarouselDeadLetterQueue = function () {
+  window.ClevprcaProductCarouselDeadLetterQueue = function () {
     return deadLetterQueue.slice();
   };
 

@@ -1,0 +1,42 @@
+/* Admin styles for Clevers Product Carousel meta boxes. */
+.clevprca-field { margin: 12px 0; }
+.clevprca-field label { display: block; font-weight: 600; margin-bottom: 4px; }
+.clevprca-fieldset { border: 1px solid #dcdcde; border-radius: 8px; padding: 10px 12px; margin: 12px 0; }
+.clevprca-fieldset legend { font-weight: 600; padding: 0 6px; }
+.clevprca-inline-check { display: inline-flex; align-items: center; gap: 6px; margin-right: 14px; margin-bottom: 6px; font-weight: 400; }
+.clevprca-categories-list { max-height: 180px; overflow: auto; border: 1px solid #dcdcde; border-radius: 6px; padding: 8px; background: #fff; }
+.clevprca-categories-list label { display: flex; align-items: center; gap: 6px; font-weight: 400; margin: 0 0 6px; }
+.clevprca-product-picker { border: 1px solid #dcdcde; border-radius: 6px; padding: 8px; background: #fff; }
+.clevprca-product-picker-results { border: 1px solid #dcdcde; border-radius: 4px; margin-top: 6px; max-height: 140px; overflow: auto; background: #fff; }
+.clevprca-product-picker-results button { display: block; width: 100%; text-align: left; padding: 6px 8px; border: 0; background: #fff; cursor: pointer; }
+.clevprca-product-picker-results button:hover { background: #f0f6fc; }
+.clevprca-selected-products { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.clevprca-chip { display: inline-flex; align-items: center; gap: 6px; background: #f0f0f1; border: 1px solid #dcdcde; border-radius: 16px; padding: 4px 8px; }
+.clevprca-chip button { border: 0; background: transparent; cursor: pointer; color: #b32d2e; font-weight: 700; padding: 0; }
+.clevprca-grid-3 { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+
+.clevprca-preview-shell { border: 1px solid #dcdcde; border-radius: 8px; padding: 10px; background: #fff; }
+.clevprca-preview-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+.clevprca-preview-card { border: 1px solid #e2e4e7; border-radius: 6px; padding: 8px; background: #f6f7f7; min-height: 74px; position: relative; }
+.clevprca-preview-card::before { content: ""; display: block; height: 24px; border-radius: 4px; background: linear-gradient(90deg, #e6e8eb, #f5f6f7, #e6e8eb); margin-bottom: 7px; }
+.clevprca-preview-card::after { content: ""; display: block; height: 8px; border-radius: 4px; width: 75%; background: #d6d9dd; }
+.clevprca-preview-shell[data-preset="2"] .clevprca-preview-card { border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
+.clevprca-preview-shell[data-preset="3"] .clevprca-preview-card { background: #1f2937; border-color: #111827; }
+.clevprca-preview-shell[data-preset="3"] .clevprca-preview-card::after { background: #9ca3af; }
+.clevprca-preview-shell[data-preset="4"] .clevprca-preview-card { background: #ffffff; border-color: #e5e7eb; }
+.clevprca-preview-label { margin: 0 0 8px; font-size: 12px; color: #50575e; }
+
+.clevprca-preview-inline { border: 1px solid #dcdcde; border-radius: 8px; padding: 10px; background: #fff; margin-top: 10px; }
+.clevprca-preview-inline .clevprca-preview-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; }
+.clevprca-preview-inline .clevprca-preview-card { border: 1px solid #e2e4e7; border-radius: 6px; padding: 8px; background: #f6f7f7; min-height: 60px; }
+.clevprca-preview-inline .clevprca-preview-card::before { content: ""; display: block; height: 16px; border-radius: 4px; background: #e6e8eb; margin-bottom: 6px; }
+.clevprca-preview-inline .clevprca-preview-card::after { content: ""; display: block; height: 6px; border-radius: 4px; width: 70%; background: #d6d9dd; }
+.clevprca-preview-inline[data-preset="2"] .clevprca-preview-card { border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
+.clevprca-preview-inline[data-preset="3"] .clevprca-preview-card { background: #1f2937; border-color: #111827; }
+.clevprca-preview-inline[data-preset="3"] .clevprca-preview-card::after { background: #9ca3af; }
+.clevprca-preview-inline[data-preset="4"] .clevprca-preview-card { background: #ffffff; border-color: #e5e7eb; }
+
+@media (max-width: 782px) {
+	.clevprca-preview-inline .clevprca-preview-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+	.clevprca-grid-3 { grid-template-columns: 1fr; }
+}

@@ -8,7 +8,7 @@
  * Loaded conditionally by clevers-product-carousel.php only when WP_CLI
  * is defined, so this file has zero runtime cost in normal HTTP requests.
  *
- * @package Clevers_Product_Carousel
+ * @package CLEVPRCA
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -20,7 +20,7 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 }
 
 /**
- * WP-CLI command surface: `wp clevers-carousel <subcommand>`.
+ * WP-CLI command surface: `wp clevprca-carousel <subcommand>`.
  *
  * Subcommands:
  *   list            List all carousels with id, title, and preset.
@@ -28,7 +28,7 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
  *   render <id>     Print the rendered HTML for a given carousel id (handy
  *                   for headless smoke tests and template debugging).
  */
-class Clevers_Product_Carousel_CLI {
+class CLEVPRCA_CLI {
 
 	/**
 	 * List every carousel CPT entry as a WP-CLI table.
@@ -45,7 +45,7 @@ class Clevers_Product_Carousel_CLI {
 
 		$query = new WP_Query(
 			array(
-				'post_type'      => CLV_SLUG,
+				'post_type'      => CLEVPRCA_SLUG,
 				'post_status'    => 'any',
 				'posts_per_page' => -1,
 				'orderby'        => 'title',
@@ -61,7 +61,7 @@ class Clevers_Product_Carousel_CLI {
 
 		$rows = array();
 		foreach ( $query->posts as $carousel ) {
-			$meta  = clevers_product_carousel_get_carousel_meta( $carousel->ID );
+			$meta  = clevprca_get_carousel_meta( $carousel->ID );
 			$preset = isset( $meta['preset'] ) ? (int) $meta['preset'] : 1;
 
 			if ( $preset_filter > 0 && $preset !== $preset_filter ) {
@@ -73,7 +73,7 @@ class Clevers_Product_Carousel_CLI {
 				'Title'     => $carousel->post_title,
 				'Status'    => $carousel->post_status,
 				'Preset'    => (string) $preset,
-				'Shortcode' => sprintf( '[clevers_carousel id="%d"]', $carousel->ID ),
+				'Shortcode' => sprintf( '[cleverspr_carousel id="%d"]', $carousel->ID ),
 			);
 		}
 
@@ -87,13 +87,13 @@ class Clevers_Product_Carousel_CLI {
 	}
 
 	/**
-	 * Delete every carousel cache transient (clv_carousel_*) plus the
+	 * Delete every carousel cache transient (cleverspr_carousel_*) plus the
 	 * activation health-check transient. Useful when content has changed
 	 * but the cache has not expired yet, or after running imports.
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp clevers-carousel flush-cache
+	 *     wp clevprca-carousel flush-cache
 	 *
 	 * @when after_wp_load
 	 */
@@ -105,9 +105,9 @@ class Clevers_Product_Carousel_CLI {
 			return;
 		}
 
-		$like_cache    = $wpdb->esc_like( '_transient_clv_carousel_' ) . '%';
-		$like_timeout  = $wpdb->esc_like( '_transient_timeout_clv_carousel_' ) . '%';
-		$like_health   = $wpdb->esc_like( '_transient_clv_activation_health_check' ) . '%';
+		$like_cache    = $wpdb->esc_like( '_transient_cleverspr_carousel_' ) . '%';
+		$like_timeout  = $wpdb->esc_like( '_transient_timeout_cleverspr_carousel_' ) . '%';
+		$like_health   = $wpdb->esc_like( '_transient_clevprca_activation_health_check' ) . '%';
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Bulk delete of plugin-owned transient rows; not a user-facing query.
 		$cache_deleted = $wpdb->query(
@@ -122,19 +122,19 @@ class Clevers_Product_Carousel_CLI {
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->options} WHERE option_name = %s",
-				'_transient_clv_activation_health_check'
+				'_transient_clevprca_activation_health_check'
 			)
 		);
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single-row delete of the health-check timeout entry.
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM {$wpdb->options} WHERE option_name = %s",
-				'_transient_timeout_clv_activation_health_check'
+				'_transient_timeout_clevprca_activation_health_check'
 			)
 		);
 
 		// Bump the global cache version so any in-process callers rebuild too.
-		update_option( 'clv_global_cache_bump', (int) get_option( 'clv_global_cache_bump', 0 ) + 1, false );
+		update_option( 'clevprca_global_cache_bump', (int) get_option( 'clevprca_global_cache_bump', 0 ) + 1, false );
 
 		WP_CLI::success( sprintf( 'Flushed %d carousel cache transient row(s).', (int) $cache_deleted ) );
 	}
@@ -143,19 +143,22 @@ class Clevers_Product_Carousel_CLI {
 	 * Render a carousel to stdout. Useful for headless smoke tests,
 	 * template debugging, and capturing markup into a file or pipe.
 	 *
-	 * By default the rendered HTML is printed. `--file=<path>` writes it
-	 * to a file instead. Returns nothing on success; non-zero exit on
+	 * By default the rendered HTML is printed. `--file=<name>` writes it
+	 * into the plugin's own uploads directory instead (never an arbitrary
+	 * filesystem path). Returns nothing on success; non-zero exit on
 	 * failure (via WP_CLI::error).
 	 *
 	 * ## OPTIONS
 	 *
-	 * [--file=<path>]
-	 *   Write the rendered HTML to <path> instead of stdout.
+	 * [--file=<name>]
+	 *   Basename of a file inside the plugin uploads directory
+	 *   (wp-content/uploads/clevers-product-carousel/). Path separators
+	 *   and traversal are rejected; the directory is created on demand.
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp clevers-carousel render 42
-	 *     wp clevers-carousel render 42 --file=/tmp/carousel-42.html
+	 *     wp clevprca-carousel render 42
+	 *     wp clevprca-carousel render 42 --file=carousel-42.html
 	 *
 	 * @when after_wp_load
 	 *
@@ -164,7 +167,7 @@ class Clevers_Product_Carousel_CLI {
 	 */
 	public function render( $args, $assoc_args ): void {
 		if ( empty( $args[0] ) ) {
-			WP_CLI::error( 'Missing carousel id. Usage: wp clevers-carousel render <id>' );
+			WP_CLI::error( 'Missing carousel id. Usage: wp clevprca-carousel render <id>' );
 		}
 
 		$id  = (int) $args[0];
@@ -178,7 +181,7 @@ class Clevers_Product_Carousel_CLI {
 			WP_CLI::error( 'WooCommerce is not active; the carousel renderer requires it.' );
 		}
 
-		$render = new Clevers_Product_Carousel_Render();
+		$render = new CLEVPRCA_Render();
 		$html   = $render->render_carousel( $id );
 
 		if ( '' === $html ) {
@@ -186,17 +189,72 @@ class Clevers_Product_Carousel_CLI {
 		}
 
 		if ( '' !== $out ) {
-			$written = file_put_contents( $out, $html );
-			if ( false === $written ) {
-				WP_CLI::error( sprintf( 'Could not write to %s.', $out ) );
+			$target = $this->resolve_upload_path( $out );
+			if ( '' === $target ) {
+				WP_CLI::error( 'The --file value must be a plain filename without path separators.' );
 			}
-			WP_CLI::success( sprintf( 'Wrote %d bytes to %s.', (int) $written, $out ) );
+
+			$written = file_put_contents( $target, $html ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- CLI dev tool writing into the plugin-owned uploads directory resolved at runtime via wp_upload_dir().
+			if ( false === $written ) {
+				WP_CLI::error( sprintf( 'Could not write to %s.', $target ) );
+			}
+			WP_CLI::success( sprintf( 'Wrote %d bytes to %s.', (int) $written, $target ) );
 			return;
 		}
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- CLI output of already-escaped HTML; not a browser context.
 		echo $html;
 	}
+
+	/**
+	 * Resolve a plain filename to an absolute path inside the plugin's
+	 * uploads directory, creating that directory on demand.
+	 *
+	 * Rejects anything that is not a bare basename (no directory
+	 * separators, no "..", no stream wrappers) so the command can never
+	 * write outside wp-content/uploads/clevers-product-carousel/.
+	 *
+	 * @param string $name Requested filename.
+	 * @return string Absolute path, or '' when the name is unsafe.
+	 */
+	private function resolve_upload_path( string $name ): string {
+		$name = trim( $name );
+
+		if ( '' === $name ) {
+			return '';
+		}
+
+		// Reject stream wrappers (scheme://) and anything but a bare basename.
+		if ( false !== strpos( $name, '://' ) ) {
+			return '';
+		}
+		if ( false !== strpos( $name, '/' ) || false !== strpos( $name, '\\' ) ) {
+			return '';
+		}
+		if ( '' === $name || '.' === $name || '..' === $name ) {
+			return '';
+		}
+		if ( $name !== basename( $name ) ) {
+			return '';
+		}
+
+		$uploads = wp_upload_dir();
+		if ( ! is_array( $uploads ) || ! empty( $uploads['error'] ) ) {
+			return '';
+		}
+
+		$basedir = isset( $uploads['basedir'] ) && is_string( $uploads['basedir'] ) ? $uploads['basedir'] : '';
+		if ( '' === $basedir ) {
+			return '';
+		}
+
+		$dir = rtrim( $basedir, '/\\' ) . '/clevers-product-carousel';
+		if ( ! file_exists( $dir ) && ! wp_mkdir_p( $dir ) ) {
+			return '';
+		}
+
+		return rtrim( $dir, '/\\' ) . '/' . $name;
+	}
 }
 
-WP_CLI::add_command( 'clevers-carousel', 'Clevers_Product_Carousel_CLI' );
+WP_CLI::add_command( 'clevprca-carousel', 'CLEVPRCA_CLI' );

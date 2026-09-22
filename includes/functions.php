@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  * @param string $html HTML de la imagen.
  * @return string HTML con lazy loading.
  */
-function clevers_product_carousel_add_lazy_loading( string $html ): string {
+function clevprca_add_lazy_loading( string $html ): string {
 	if ( '' === $html ) {
 		return $html;
 	}
@@ -29,7 +29,7 @@ function clevers_product_carousel_add_lazy_loading( string $html ): string {
  *
  * @return bool
  */
-function clevers_product_carousel_supports_webp(): bool {
+function clevprca_supports_webp(): bool {
 	if ( ! function_exists( 'wp_image_editor_supports' ) ) {
 		return false;
 	}
@@ -44,8 +44,8 @@ function clevers_product_carousel_supports_webp(): bool {
  * @param string $size Tamaño de la imagen.
  * @return string URL de la imagen (WebP o original).
  */
-function clevers_product_carousel_get_webp_image_url( int $attachment_id, string $size = 'woocommerce_thumbnail' ): string {
-	if ( ! clevers_product_carousel_supports_webp() ) {
+function clevprca_get_webp_image_url( int $attachment_id, string $size = 'woocommerce_thumbnail' ): string {
+	if ( ! clevprca_supports_webp() ) {
 		return '';
 	}
 
@@ -84,12 +84,12 @@ function clevers_product_carousel_get_webp_image_url( int $attachment_id, string
  * @param int    $attachment_id ID del attachment.
  * @return string HTML con picture element si WebP está disponible.
  */
-function clevers_product_carousel_add_webp_support( string $html, int $attachment_id ): string {
+function clevprca_add_webp_support( string $html, int $attachment_id ): string {
 	if ( '' === $html || $attachment_id <= 0 ) {
 		return $html;
 	}
 
-	$webp_url = clevers_product_carousel_get_webp_image_url( $attachment_id );
+	$webp_url = clevprca_get_webp_image_url( $attachment_id );
 	if ( '' === $webp_url ) {
 		return $html;
 	}
@@ -116,8 +116,8 @@ function clevers_product_carousel_add_webp_support( string $html, int $attachmen
  * @param int $id ID del post.
  * @return array<string, mixed>
  */
-function clevers_product_carousel_get_carousel_meta( $id ): array {
-	return (array) get_post_meta( $id, '_clv_settings', true );
+function clevprca_get_carousel_meta( $id ): array {
+	return (array) get_post_meta( $id, '_clevprca_settings', true );
 }
 
 /**
@@ -125,7 +125,7 @@ function clevers_product_carousel_get_carousel_meta( $id ): array {
  *
  * @return string[]
  */
-function clevers_product_carousel_get_allowed_orderby_values(): array {
+function clevprca_get_allowed_orderby_values(): array {
 	return array(
 		'date',
 		'modified',
@@ -147,7 +147,7 @@ function clevers_product_carousel_get_allowed_orderby_values(): array {
  * @param string     $strategy intersection|union
  * @return int[]
  */
-function clevers_product_carousel_merge_product_ids( ?array $current, array $incoming, string $strategy ): array {
+function clevprca_merge_product_ids( ?array $current, array $incoming, string $strategy ): array {
 	$incoming = array_values( array_unique( array_map( 'intval', $incoming ) ) );
 
 	if ( null === $current ) {
@@ -167,7 +167,7 @@ function clevers_product_carousel_merge_product_ids( ?array $current, array $inc
  * @param mixed $value Valor.
  * @return string
  */
-function clevers_product_carousel_sanitize_css_value( $value ): string {
+function clevprca_sanitize_css_value( $value ): string {
 	if ( ! is_string( $value ) && ! is_int( $value ) && ! is_float( $value ) ) {
 		return '';
 	}
@@ -189,7 +189,7 @@ function clevers_product_carousel_sanitize_css_value( $value ): string {
  *
  * @param mixed $value
  */
-function clevers_product_carousel_to_int( $value, int $default = 0 ): int {
+function clevprca_to_int( $value, int $default = 0 ): int {
 	return is_numeric( $value ) ? (int) $value : $default;
 }
 
@@ -198,7 +198,7 @@ function clevers_product_carousel_to_int( $value, int $default = 0 ): int {
  *
  * @param mixed $value
  */
-function clevers_product_carousel_to_string( $value, string $default = '' ): string {
+function clevprca_to_string( $value, string $default = '' ): string {
 	return is_string( $value ) || is_int( $value ) || is_float( $value ) ? (string) $value : $default;
 }
 
@@ -208,9 +208,9 @@ function clevers_product_carousel_to_string( $value, string $default = '' ): str
  * @param string $rel_path Ruta relativa dentro de templates/.
  * @return string
  */
-function clevers_product_carousel_locate_template( $rel_path ): string {
+function clevprca_locate_template( $rel_path ): string {
 	$rel_path  = ltrim( (string) $rel_path, '/' );
-	$rel_path  = apply_filters( 'clevers_carousel_template_path', $rel_path );
+	$rel_path  = apply_filters( 'cleverspr_carousel_template_path', $rel_path );
 	$theme_path = 'clevers-product-carousel/' . $rel_path;
 	$tpl        = locate_template( $theme_path );
 
@@ -218,7 +218,7 @@ function clevers_product_carousel_locate_template( $rel_path ): string {
 		return $tpl;
 	}
 
-	return CLV_DIR . 'templates/' . $rel_path;
+	return CLEVPRCA_DIR . 'templates/' . $rel_path;
 }
 
 /**
@@ -227,19 +227,19 @@ function clevers_product_carousel_locate_template( $rel_path ): string {
  * @param int $carousel_id ID del carrusel.
  * @return array<string, mixed>
  */
-function clevers_product_carousel_build_query_args( $carousel_id ) {
-	$meta    = clevers_product_carousel_get_carousel_meta( $carousel_id );
-	$orderby = sanitize_text_field( clevers_product_carousel_to_string( $meta['orderby'] ?? null, 'date' ) );
+function clevprca_build_query_args( $carousel_id ) {
+	$meta    = clevprca_get_carousel_meta( $carousel_id );
+	$orderby = sanitize_text_field( clevprca_to_string( $meta['orderby'] ?? null, 'date' ) );
 
-	if ( ! in_array( $orderby, clevers_product_carousel_get_allowed_orderby_values(), true ) ) {
+	if ( ! in_array( $orderby, clevprca_get_allowed_orderby_values(), true ) ) {
 		$orderby = 'date';
 	}
 
-	$order = strtoupper( sanitize_text_field( clevers_product_carousel_to_string( $meta['order'] ?? null, 'DESC' ) ) );
+	$order = strtoupper( sanitize_text_field( clevprca_to_string( $meta['order'] ?? null, 'DESC' ) ) );
 	$order = in_array( $order, array( 'ASC', 'DESC' ), true ) ? $order : 'DESC';
 
 	$args = array(
-		'limit'  => max( 1, min( 48, clevers_product_carousel_to_int( $meta['limit'] ?? null, 8 ) ) ),
+		'limit'  => max( 1, min( 48, clevprca_to_int( $meta['limit'] ?? null, 8 ) ) ),
 		'order'  => $order,
 		'return' => 'objects',
 	);
@@ -247,7 +247,7 @@ function clevers_product_carousel_build_query_args( $carousel_id ) {
 	$manual_product_ids = array_values(
 		array_unique(
 			array_filter(
-				array_map( static function ( $id ): int { return clevers_product_carousel_to_int( $id ); }, (array) ( $meta['manual_product_ids'] ?? array() ) )
+				array_map( static function ( $id ): int { return clevprca_to_int( $id ); }, (array) ( $meta['manual_product_ids'] ?? array() ) )
 			)
 		)
 	);
@@ -256,8 +256,8 @@ function clevers_product_carousel_build_query_args( $carousel_id ) {
 		$args['include'] = $manual_product_ids;
 		$args['orderby'] = 'include';
 
-		$args = apply_filters( 'clevers_carousel/query_args', $args, $carousel_id, $meta );
-		$args = apply_filters( 'clevers_carousel_query_args', $args, $carousel_id, $meta );
+		$args = apply_filters( 'cleverspr_carousel/query_args', $args, $carousel_id, $meta );
+		$args = apply_filters( 'cleverspr_carousel_query_args', $args, $carousel_id, $meta );
 
 		return is_array( $args ) ? $args : array();
 	}
@@ -287,11 +287,11 @@ function clevers_product_carousel_build_query_args( $carousel_id ) {
 	}
 
 	$include_ids = null;
-	$strategy    = apply_filters( 'clevers_carousel/include_strategy', 'intersection', $carousel_id, $meta );
+	$strategy    = apply_filters( 'cleverspr_carousel/include_strategy', 'intersection', $carousel_id, $meta );
 	$strategy    = ( 'union' === $strategy ) ? 'union' : 'intersection';
 
 	if ( ! empty( $meta['on_sale'] ) ) {
-		$include_ids = clevers_product_carousel_merge_product_ids(
+		$include_ids = clevprca_merge_product_ids(
 			$include_ids,
 			(array) wc_get_product_ids_on_sale(),
 			$strategy
@@ -299,7 +299,7 @@ function clevers_product_carousel_build_query_args( $carousel_id ) {
 	}
 
 	if ( ! empty( $meta['on_featured'] ) ) {
-		$include_ids = clevers_product_carousel_merge_product_ids(
+		$include_ids = clevprca_merge_product_ids(
 			$include_ids,
 			(array) wc_get_featured_product_ids(),
 			$strategy
@@ -314,8 +314,8 @@ function clevers_product_carousel_build_query_args( $carousel_id ) {
 		$args['stock_status'] = 'instock';
 	}
 
-	$args = apply_filters( 'clevers_carousel/query_args', $args, $carousel_id, $meta );
-	$args = apply_filters( 'clevers_carousel_query_args', $args, $carousel_id, $meta );
+	$args = apply_filters( 'cleverspr_carousel/query_args', $args, $carousel_id, $meta );
+	$args = apply_filters( 'cleverspr_carousel_query_args', $args, $carousel_id, $meta );
 
 	return is_array( $args ) ? $args : array();
 }
@@ -326,8 +326,8 @@ function clevers_product_carousel_build_query_args( $carousel_id ) {
  * @param int $carousel_id ID del carrusel.
  * @return array<string, mixed>
  */
-function clevers_product_carousel_get_settings( $carousel_id ) {
-	$meta     = clevers_product_carousel_get_carousel_meta( $carousel_id );
+function clevprca_get_settings( $carousel_id ) {
+	$meta     = clevprca_get_carousel_meta( $carousel_id );
 	$defaults = array(
 		'preset'                    => 1,
 		'slidesToShow'              => 4,
@@ -358,7 +358,7 @@ function clevers_product_carousel_get_settings( $carousel_id ) {
 	$settings['builder_init_delay_ms'] = max( 0, min( 5000, (int) ( $settings['builder_init_delay_ms'] ?? 0 ) ) );
 	$settings['builder_disable_center_mode'] = ! empty( $settings['builder_disable_center_mode'] );
 
-	return apply_filters( 'clevers_carousel/settings', $settings, $carousel_id );
+	return apply_filters( 'cleverspr_carousel/settings', $settings, $carousel_id );
 }
 
 /**
@@ -367,7 +367,7 @@ function clevers_product_carousel_get_settings( $carousel_id ) {
  * @param int $carousel_id ID del carrusel.
  * @return array<string, int|float|string>
  */
-function clevers_product_carousel_get_queue_metrics( int $carousel_id ): array {
+function clevprca_get_queue_metrics( int $carousel_id ): array {
 	$defaults = array(
 		'pending'                 => 0,
 		'processed'               => 0,
@@ -377,7 +377,7 @@ function clevers_product_carousel_get_queue_metrics( int $carousel_id ): array {
 		'last_run_at'             => '',
 	);
 
-	$stored = get_post_meta( $carousel_id, '_clv_queue_metrics', true );
+	$stored = get_post_meta( $carousel_id, '_clevprca_queue_metrics', true );
 	if ( ! is_array( $stored ) ) {
 		return $defaults;
 	}
@@ -404,7 +404,7 @@ function clevers_product_carousel_get_queue_metrics( int $carousel_id ): array {
  * @param string $last_error Último error.
  * @return void
  */
-function clevers_product_carousel_update_queue_metrics(
+function clevprca_update_queue_metrics(
 	int $carousel_id,
 	int $pending,
 	int $processed,
@@ -414,7 +414,7 @@ function clevers_product_carousel_update_queue_metrics(
 ): void {
 	update_post_meta(
 		$carousel_id,
-		'_clv_queue_metrics',
+		'_clevprca_queue_metrics',
 		array(
 			'pending'                 => max( 0, $pending ),
 			'processed'               => max( 0, $processed ),
