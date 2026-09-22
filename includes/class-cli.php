@@ -231,7 +231,7 @@ class CLEVPRCA_CLI {
 		if ( false !== strpos( $name, '/' ) || false !== strpos( $name, '\\' ) ) {
 			return '';
 		}
-		if ( '' === $name || '.' === $name || '..' === $name ) {
+		if ( '.' === $name || '..' === $name ) {
 			return '';
 		}
 		if ( $name !== basename( $name ) ) {
