@@ -119,11 +119,11 @@ function clevprca_bump_readme_badge( string $file, string $new_version ): void {
 		return;
 	}
 
-	$pattern = '/!\[Version\]\(https:\/\/img\.shields\.io\/badge\/version-)[0-9]+\.[0-9]+\.[0-9]+(-blue\)/';
+	$pattern = '/(!\[Version\]\(https:\/\/img\.shields\.io\/badge\/version-)[0-9]+\.[0-9]+\.[0-9]+(-blue\))/';
 	$replacement = '${1}' . $new_version . '${2}';
 	$new_content = preg_replace( $pattern, $replacement, $content );
 
-	if ( $new_content !== $content ) {
+	if ( null !== $new_content && $new_content !== $content ) {
 		file_put_contents( $file, $new_content );
 		echo "Actualizado README.md badge a version {$new_version}.\n";
 	} else {

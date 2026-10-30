@@ -4,27 +4,20 @@ All notable changes to **Clevers Product Carousel** are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.4.1] - 2026-10-30
 
 ### Fixed
-- `tests/bootstrap.php` now defines `WC_Product` with the WooCommerce
-  surface used by `helpers-discount.php` (`is_on_sale`, `is_type`,
-  `get_regular_price`, `get_sale_price`, `get_children`) so PHPUnit can
-  generate mocks for discount tests.
-- `do_action()` mock in `tests/bootstrap.php` now invokes the registered
-  callbacks instead of being a no-op, so the
-  `clevprca_carousel_before_render` / `clevprca_carousel_after_render`
-  assertions in `HooksTest::test_before_and_after_render_actions_receive_products`
-  actually fire.
-- Bootstrap now `require_once`s `includes/helpers-discount.php`, which
-  exposes `clevprca_get_discount_percentage()` for the
-  `RenderIntegrationTest::test_discount_percentage_returns_null_for_non_sale_product`
-  case.
+- Fixed `.distignore` rule `/vendor` to avoid inadvertently excluding `assets/vendor/` from distribution packages.
+- Fixed invalid 5-digit hex color syntax (`#00000` -> `#000000`) for `--clevers-bubble-background`.
+- Added inline CSS custom properties injection directly into the slider container's `style` attribute, ensuring custom per-carousel colors apply reliably when page/object caching is active.
+- Improved Preset 2 layout styling: equal-height slides with flexbox stretch, fixed height container for thumbnails (`object-fit: contain`), line-clamped titles, aligned bottom action buttons, and modernized circular floating arrows.
+- Fixed `bin/bump-version.php` regex pattern and added null check when updating the version badge in `README.md`.
+- `tests/bootstrap.php` defines `WC_Product` with the WooCommerce surface used by `helpers-discount.php`.
+- `do_action()` mock in `tests/bootstrap.php` invokes registered callbacks.
+- Bootstrap `require_once`s `includes/helpers-discount.php` for discount helpers.
 
 ### Added
-- `phpstan.neon` committed next to `phpstan.neon.dist` so the static
-  analysis gate can run with `phpstan analyse -c phpstan.neon` locally
-  without copying the dist file.
+- `phpstan.neon` committed next to `phpstan.neon.dist`.
 
 ## [1.4.0] - 2026-09
 
