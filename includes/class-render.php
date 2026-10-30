@@ -399,6 +399,7 @@ function clevprca_get_slider_data_attributes( $carousel_id, array $settings ): s
 		'button_text'       => '--clevers-button-text',
 	);
 
+	$vars = array();
 	foreach ( $vars_map as $setting_key => $css_var ) {
 		if ( empty( $settings[ $setting_key ] ) ) {
 			continue;
@@ -409,7 +410,12 @@ function clevprca_get_slider_data_attributes( $carousel_id, array $settings ): s
 			continue;
 		}
 
-		$attrs['style'] .= $css_var . ':' . $sanitized . ';';
+		$vars[] = $css_var . ':' . $sanitized . ';';
+	}
+
+	$vars = apply_filters( 'cleverspr_carousel_css_vars', $vars, $carousel_id, $settings, $vars_map );
+	if ( is_array( $vars ) && ! empty( $vars ) ) {
+		$attrs['style'] .= implode( '', array_map( static function ( $value ): string { return clevprca_to_string( $value ); }, $vars ) );
 	}
 
 	// Brizy editor preview often renders shortcode HTML without running Slick JS.

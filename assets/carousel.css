@@ -424,6 +424,7 @@ a.clevers-button.ajax_add_to_cart.add_to_cart_button:focus {
     margin: 0 auto;
     width: 100%;
     max-width: 200px;
+    box-sizing: border-box;
     transition: background-color .18s ease;
 }
 
