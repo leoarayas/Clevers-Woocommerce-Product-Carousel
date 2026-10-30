@@ -385,6 +385,33 @@ function clevprca_get_slider_data_attributes( $carousel_id, array $settings ): s
 		(int) $attrs['data-slides-mobile']
 	);
 
+	$vars_map = array(
+		'color_primary'     => '--clevers-primary',
+		'color_primary2'    => '--clevers-primary-hover',
+		'color_secondary'   => '--clevers-secondary',
+		'color_accent'      => '--clevers-accent',
+		'color_text'        => '--clevers-text',
+		'color_card_bg'     => '--clevers-card-bg',
+		'color_border'      => '--clevers-border',
+		'bubble_background' => '--clevers-bubble-background',
+		'bubble_text'       => '--clevers-bubble-text',
+		'button_background' => '--clevers-button-background',
+		'button_text'       => '--clevers-button-text',
+	);
+
+	foreach ( $vars_map as $setting_key => $css_var ) {
+		if ( empty( $settings[ $setting_key ] ) ) {
+			continue;
+		}
+
+		$sanitized = clevprca_sanitize_css_value( $settings[ $setting_key ] );
+		if ( '' === $sanitized ) {
+			continue;
+		}
+
+		$attrs['style'] .= $css_var . ':' . $sanitized . ';';
+	}
+
 	// Brizy editor preview often renders shortcode HTML without running Slick JS.
 	// Force a horizontal, scrollable layout directly inline so the preview remains usable.
 	if ( clevprca_is_brizy_editor_preview_request() ) {
