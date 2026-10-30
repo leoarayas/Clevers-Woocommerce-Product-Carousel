@@ -10,7 +10,7 @@
 bin
 node_modules
 tests
-vendor
+/vendor
 composer.json
 composer.lock
 phpcs.xml*
