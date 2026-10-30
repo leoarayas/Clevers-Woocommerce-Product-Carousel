@@ -5,7 +5,7 @@
  * Description: Create customizable WooCommerce product carousels with server-side rendering and theme-overridable templates.
  * Author:      Clevers Devs
  * Author URI:  https://clevers.dev
- * Version:     1.4.0
+ * Version:     1.4.1
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * License:     GPLv2 or later

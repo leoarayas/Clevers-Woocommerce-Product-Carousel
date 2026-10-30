@@ -4,7 +4,7 @@ Donate link: https://clevers.dev
 Tags: woocommerce, carousel, products, ecommerce
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -147,6 +147,12 @@ Source: https://github.com/kenwheeler/slick
 
 == Changelog ==
 
+= 1.4.1 =
+* Fixed `.distignore` to preserve bundled vendor assets (`assets/vendor/slick`) in distribution archives.
+* Fixed invalid hex color syntax (`#00000` -> `#000000`) for the discount bubble background.
+* Injected dynamic CSS color variables directly into slider container data-attributes to ensure custom colors persist across caching layers.
+* Improved Preset 2 layout: equal-height cards via flexbox, standardized image container, clamped titles, aligned action buttons, and restyled floating navigation arrows.
+
 = 1.4.0 =
 * **Breaking change:** the shortcode tag changed from `[clevers_carousel]` to `[cleverspr_carousel]`, and the Gutenberg block namespace from `clevers-product-carousel/carousel` to `cleverspr/carousel`. Existing content referencing the old names must be updated. The CPT slug (`clevers_carousel`) and the post meta keys are unchanged, so existing carousel posts keep their settings.
 * WP-CLI `render --file` no longer writes to an arbitrary path. `--file` now takes a plain filename written inside `wp-content/uploads/clevers-product-carousel/`, resolved at runtime with `wp_upload_dir()`; path separators, `..` and stream wrappers are rejected.
@@ -196,6 +202,9 @@ Source: https://github.com/kenwheeler/slick
 * Initial release with WooCommerce product carousel support.
 
 == Upgrade Notice ==
+
+= 1.4.1 =
+Bugfix release: restores bundled Slick library assets, fixes CSS variable syntax, and ensures custom colors apply reliably with page caching.
 
 = 1.4.0 =
 Breaking: the shortcode is now `[cleverspr_carousel]` and the block `cleverspr/carousel`. Update existing content. Also: safer WP-CLI file output and unique `clevprca` / `cleverspr` prefixes.
