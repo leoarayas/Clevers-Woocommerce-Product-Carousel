@@ -16,6 +16,7 @@
 .clevers-button:active,
 .clevers-button:focus {
     background: var(--clevers-secondary);
+    color: var(--clevers-button-text-hover, var(--clevers-button-text, #fff));
 }
 
 .ing-onsale-card {
@@ -160,17 +161,17 @@
 }
 
 .clevers-button:hover {
-    color: white;
+    color: var(--clevers-button-text-hover, #fff);
     background: var(--clevers-secondary);
 }
 
 .clevers-button:active {
-    color: white;
+    color: var(--clevers-button-text-hover, #fff);
     background: var(--clevers-secondary);
 }
 
 .clevers-button:checked {
-    color: white;
+    color: var(--clevers-button-text-hover, #fff);
     background: var(--clevers-secondary);
 }
 
@@ -434,7 +435,7 @@ a.clevers-button.ajax_add_to_cart.add_to_cart_button:focus {
 .clevers-product-carousel.preset-2 .clevers-button:hover,
 .clevers-product-carousel.preset-2 .clevers-button:focus {
     background: var(--clevers-secondary);
-    color: var(--clevers-button-text, #fff);
+    color: var(--clevers-button-text-hover, var(--clevers-button-text, #fff));
 }
 
 /* Slide central destacado (requiere centerMode en Slick) */

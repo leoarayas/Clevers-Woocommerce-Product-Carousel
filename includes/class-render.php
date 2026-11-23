@@ -244,6 +244,7 @@ class CLEVPRCA_Render {
 			'bubble_text'       => '--clevers-bubble-text',
 			'button_background' => '--clevers-button-background',
 			'button_text'       => '--clevers-button-text',
+			'button_text_hover' => '--clevers-button-text-hover',
 		);
 
 		$vars = array();
@@ -397,6 +398,7 @@ function clevprca_get_slider_data_attributes( $carousel_id, array $settings ): s
 		'bubble_text'       => '--clevers-bubble-text',
 		'button_background' => '--clevers-button-background',
 		'button_text'       => '--clevers-button-text',
+		'button_text_hover' => '--clevers-button-text-hover',
 	);
 
 	$vars = array();

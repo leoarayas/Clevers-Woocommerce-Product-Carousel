@@ -269,7 +269,18 @@ class CLEVPRCA_Admin {
 		$button_background = isset( $meta['button_background'] ) ? esc_attr( $meta['button_background'] ) : '';
 		$button_text       = isset( $meta['button_text'] ) ? esc_attr( $meta['button_text'] ) : '';
 
-		$button_text_color_value = ( 'transparent' === $button_text ) ? '' : $button_text;
+		// El texto transparente sobre un boton con fondo es invisible por definicion:
+		// el campo ya no ofrece esa opcion y los valores heredados se migran al
+		// color de mejor contraste en clevprca_ensure_text_contrast().
+		$resolved_button_text      = clevprca_ensure_text_contrast(
+			array(
+				'button_background' => $button_background,
+				'button_text'       => $button_text,
+			)
+		);
+		$button_text_color_value   = clevprca_color_is_invisible( $resolved_button_text['button_text'] )
+			? ''
+			: $resolved_button_text['button_text'];
 		$terms                   = get_terms(
 			array(
 				'taxonomy'   => 'product_cat',
@@ -494,10 +505,6 @@ class CLEVPRCA_Admin {
 		<div class="clevprca-field">
 			<label><?php esc_html_e( 'Button Text', 'clevers-product-carousel' ); ?></label>
 			<input type="color" name="clevprca[button_text]" value="<?php echo esc_attr( $button_text_color_value ); ?>">
-			<label class="clevprca-inline-check" style="margin-top:6px;">
-				<input type="checkbox" name="clevprca[button_text_transparent]" <?php checked( 'transparent', $button_text ); ?> />
-				<?php esc_html_e( 'Transparent', 'clevers-product-carousel' ); ?>
-			</label>
 		</div>
 		<div class="clevprca-field"><label><?php esc_html_e( 'Text', 'clevers-product-carousel' ); ?></label>
 			<input type="color" name="clevprca[color_text]" value="<?php echo esc_attr( $color_text ); ?>">
@@ -610,9 +617,9 @@ class CLEVPRCA_Admin {
 			$out[ $field ] = $this->sanitize_color_value( $in[ $field ] ?? '' );
 		}
 
-		if ( ! empty( $in['button_text_transparent'] ) ) {
-			$out['button_text'] = 'transparent';
-		}
+		// Lo guardado y lo renderizado deben coincidir: si el par texto/fondo
+		// no alcanza contraste AA, se corrige antes de persistir.
+		$out = clevprca_ensure_text_contrast( $out );
 
 		update_post_meta( $post_id, '_clevprca_settings', $out );
 
@@ -1036,6 +1043,6 @@ class CLEVPRCA_Admin {
 			$normalized[ $field ] = $this->sanitize_color_value( $settings[ $field ] ?? '' );
 		}
 
-		return $normalized;
+		return clevprca_ensure_text_contrast( $normalized );
 	}
 }
