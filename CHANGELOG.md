@@ -4,6 +4,18 @@ All notable changes to **Clevers Product Carousel** are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.3] - 2026-11-23
+
+### Fixed
+- Button text now keeps its own hover color: when the chosen text fails on `--clevers-secondary` (the hover background), the plugin emits `--clevers-button-text-hover` with the contrasting color and the hover/focus rules use it. Fixing the resting state no longer makes the button unreadable on hover.
+- Button and badge text can no longer render unreadable. `clevprca_get_settings()` now checks the contrast ratio (WCAG 2.x) between `button_text`/`button_background` and `bubble_text`/`bubble_background`. When the ratio is below 4.5:1 — or the text is transparent, empty or identical to the background — it is replaced by the first design candidate (`#FFFFFF`, then `#1A1A1A`) that reaches 4.5:1, falling back to pure black for mid-gray backgrounds where neither of those two is enough. Unset colors are evaluated against the CSS defaults (`#2563eb` button, `#000000` badge, white text), so a custom background never inherits an unreadable inherited default, and an explicitly transparent background is left untouched. Reported on wildlifeoutdoor.cl, where "Los más vendidos" had `button_text: transparent` and a black-on-green discount badge at 3.72:1.
+
+### Changed
+- The "Transparent" checkbox for Button Text was removed from the carousel editor: transparent text on a colored button is invisible by definition. The same contrast correction now runs before saving and on JSON import, so the color stored in the editor always matches what the carousel renders; legacy `transparent` values are displayed as the best-contrast color derived from the configured button background.
+
+### Added
+- `clevprca_relative_luminance()`, `clevprca_contrast_ratio()`, `clevprca_color_is_invisible()`, `clevprca_contrast_text_color()` and `clevprca_ensure_text_contrast()` helpers, covered by `tests/Unit/TextContrastTest.php`.
+
 ## [1.4.2] - 2026-11-23
 
 ### Fixed
