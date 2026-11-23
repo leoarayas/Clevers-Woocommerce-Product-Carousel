@@ -4,6 +4,12 @@ All notable changes to **Clevers Product Carousel** are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.2] - 2026-11-23
+
+### Fixed
+- Preset 2 carousel no longer collapses into a vertical stack of full-width slides on themes that set `flex-wrap: wrap` on every `.slick-track` (e.g. Brizy). The track now forces `flex-wrap: nowrap`.
+- The Preset 2 equal-height rule matched the Slick slide itself (`.carousel-item`), overriding Slick's inline slide width with `width: 100% !important`. It is now scoped to `.carousel-item:not(.slick-slide)`, so the pre-init grid fallback keeps working while initialized slides keep their Slick width.
+
 ## [1.4.1] - 2026-10-30
 
 ### Fixed
