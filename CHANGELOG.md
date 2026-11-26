@@ -4,6 +4,12 @@ All notable changes to **Clevers Product Carousel** are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/) and the
 project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.4] - 2026-11-26
+
+### Changed
+- Bumped `Tested up to` to WordPress 7.2 and verified compatibility with PHP 8.6.
+- Guarded `ReflectionMethod::setAccessible()` in unit tests for PHP 8.6.
+
 ## [1.4.3] - 2026-11-23
 
 ### Fixed
