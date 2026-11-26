@@ -3,8 +3,8 @@ Contributors: cleversdev
 Donate link: https://clevers.dev
 Tags: woocommerce, carousel, products, ecommerce
 Requires at least: 6.0
-Tested up to: 7.1
-Stable tag: 1.4.3
+Tested up to: 7.2
+Stable tag: 1.4.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -146,6 +146,10 @@ Source: https://github.com/kenwheeler/slick
 4. Different card presets.
 
 == Changelog ==
+
+= 1.4.4 =
+* Compatibility: Tested up to WordPress 7.2 and PHP 8.6.
+* Tests: Guard `ReflectionMethod::setAccessible()` calls for PHP 8.6 compatibility.
 
 = 1.4.1 =
 * Fixed `.distignore` to preserve bundled vendor assets (`assets/vendor/slick`) in distribution archives.

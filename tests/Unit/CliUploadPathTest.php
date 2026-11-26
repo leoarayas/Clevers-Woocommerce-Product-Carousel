@@ -40,7 +40,9 @@ require_once dirname( __DIR__, 2 ) . '/includes/class-cli.php';
 final class CliUploadPathTest extends TestCase {
 	private function resolve( string $name ): string {
 		$method = new ReflectionMethod( CLEVPRCA_CLI::class, 'resolve_upload_path' );
-		$method->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 ) {
+			$method->setAccessible( true );
+		}
 		return (string) $method->invoke( new CLEVPRCA_CLI(), $name );
 	}
 
